@@ -15,11 +15,11 @@ from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem
 import sys
-import keyring
 from screens.CalendarScreen import CalendarScreen
 from screens.CookingScreen import CookingScreen
 from screens.HomeScreen import HomeScreen
 from screens.PrintScreen import PrintScreen
+from globals import fullscreen
 
 class HomeDisplayApp(MDApp):
     def on_start(self):
@@ -28,7 +28,7 @@ class HomeDisplayApp(MDApp):
 
     def build(self):
         Window.size=(1920, 1080)
-        #Window.fullscreen = True
+        Window.fullscreen = fullscreen
     #    cdl = self.root.ids.calendar_day_layout
     #    print(cdl)
     #    pass

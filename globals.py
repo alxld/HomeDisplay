@@ -14,3 +14,5 @@ try:
 except Exception as error:
     print(f"Error getting Todoist API key from keyring:\n   {error}")
     sys.exit(-1)
+
+fullscreen = False
