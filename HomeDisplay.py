@@ -4,6 +4,13 @@
 #   https://google-calendar-simple-api.readthedocs.io/en/latest/getting_started.html#getting-started
 # and download the .json file to ~/.credentials and delete token.pickle.
 
+# To get gkeepapi master token, go here:
+#   https://accounts.google.com/EmbeddedSetup
+# Open the debug console with F-12.  Go through all the prompts.  Once you click 'I agree', QUICKLY
+# copy and paste the oauth_token field and paste it into README/token_exchange.py.  Run the script in
+# the debugger (not sure why it won't print right) and grab the value of master_response['Token'].
+# Save that into keyring's google_oauth.
+
 from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem

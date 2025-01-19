@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import keyring
 import sys
 import webcolors
-from globals import user_email
+from globals import user_email, todoist_api_key
 
 class Calendars:
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
@@ -13,16 +13,9 @@ class Calendars:
         self._enabledCalendars = ['aarondeno11@gmail.com', 'en.usa#holiday@group.v.calendar.google.com']
         self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
 
-        # Get Todoist API key from keyring
-        try:
-            self.todoist_api_key = keyring.get_password("todoist_api", user_email)
-        except Exception as error:
-            print(f"Error getting Todoist API key from keyring:\n   {error}")
-            sys.exit(-1)
-
         # Connect to Todoist
         try:
-            self.todoist_api = TodoistAPI(self.todoist_api_key)
+            self.todoist_api = TodoistAPI(todoist_api_key)
         except Exception as error:
             print(f"Error logging into to Todoist:\n   {error}")
             sys.exit(-1)

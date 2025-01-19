@@ -2,34 +2,21 @@ import gkeepapi
 import keyring
 import sys
 from todoist_api_python.api import TodoistAPI
+from globals import user_email, google_oauth_key, todoist_api_key
 
 class Lists:
-    def __init__(self, user_email):
-        # Get google oauth key from keyring
-        try:
-            self.google_oauth_key = keyring.get_password("google_oauth", user_email)
-        except Exception as error:
-            print(f"Error getting Google OAuth key from keyring:\n   {error}")
-            sys.exit(-1)
-
-        # Get todoist api key from keyring
-        try:
-            self.todoist_api_key = keyring.get_password("todoist_api", user_email)
-        except Exception as error:
-            print(f"Error getting Todoist API key from keyring:\n   {error}")
-            sys.exit(-1)
-
+    def __init__(self):
         # Connect to Google Keep
         try:
             self.keep = gkeepapi.Keep()
-            self.keep.authenticate(user_email, self.google_oauth_key)
+            self.keep.authenticate(user_email, google_oauth_key)
         except Exception as error:
             print(f"Error logging into to Google Keep:\n   {error}")
             sys.exit(-1)
 
         # Connect to Todoist
         try:
-            self.todoist_api = TodoistAPI(self.todoist_api_key)
+            self.todoist_api = TodoistAPI(todoist_api_key)
         except Exception as error:
             print(f"Error logging into to Todoist:\n   {error}")
             sys.exit(-1)

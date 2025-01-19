@@ -12,6 +12,7 @@ from kivy.factory import Factory
 from kivy.graphics import Color, RoundedRectangle
 
 from agents.Calendars import Calendars
+from agents.Lists import Lists
 from Helpers.KivyHelpers import FindDialogRoot, FindChildByID
 from datetime import datetime, date
 import platform
@@ -22,6 +23,7 @@ class CalendarScreen(MDScreen):
         super().__init__(**kwargs)
 
         self._calendars = Calendars()
+        self._lists = Lists()
 
         self.day_widgets = []
 
