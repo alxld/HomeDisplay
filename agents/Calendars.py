@@ -1,10 +1,150 @@
-from todoist_api_python.api import TodoistAPI
+from todoist_api_python.api import TodoistAPI, Task
 from gcsa.google_calendar import GoogleCalendar
+from gcsa.event import Event
 from datetime import datetime, timedelta, date
 import keyring
 import sys
 import webcolors
+import platform
+import dateutil
 from globals import user_email, todoist_api_key
+
+class CalendarEvent:
+    def __init__(self, item, calendars, calendar_id):
+        self._item = item
+        self._calendars = calendars
+        self._calendar_id = calendar_id
+
+        if platform.system() in ('Linux'):
+            self._start_format = "%-I:%M%p"
+        else:
+            self._start_format = "%#I:%M%p"
+    
+class GoogleEvent(CalendarEvent):
+    def __init__(self, event, calendars, calendar_id):
+        super().__init__(event, calendars, calendar_id)
+
+    @property
+    def isGoogleEvent(self):
+        return True
+    
+    @property
+    def isTodoistEvent(self):
+        return False
+    
+    @property
+    def reminders(self):
+        if self._item.default_reminders:
+            return "10 minutes before"
+        elif len(self._item.reminders) > 0:
+            return self._item.reminders[0]
+        else:
+            return "No reminders set"
+        
+    @property
+    def is_recurring(self):
+        return self._item.recurring_event_id
+    
+    @property
+    def name(self):
+        return self._item.summary
+    
+    @property
+    def start_pretty(self):
+        return self._item.start.strftime(self._start_format)
+    
+    @property
+    def start_date(self):
+        return self._item.start
+    
+    @property
+    def start_datetime(self):
+        return self._item.start
+    
+    @property
+    def end(self):
+        return self._item.end
+    
+    @property
+    def colors(self):
+        return self._calendars.google_colors[self._calendar_id].values()
+    
+    @property
+    def organizer(self):
+        return self._item.organizer
+    
+    @property
+    def visibility(self):
+        return self._item.visibility
+
+
+class TodoistEvent(CalendarEvent):
+    def __init__(self, item, calendars, project_id):
+        super().__init__(item, calendars, project_id)
+        self._project_id = project_id
+
+    @property
+    def isGoogleEvent(self):
+        return False
+    
+    @property
+    def isTodoistEvent(self):
+        return True
+    
+    @property
+    def reminders(self):
+        return "No reminders set"
+    
+    @property
+    def is_recurring(self):
+        return self._item.due.is_recurring
+    
+    @property
+    def name(self):
+        return self._item.content
+    
+    @property
+    def start_pretty(self):
+        if self._item.due.datetime:
+            return dateutil.parser.parse(self._item.due.datetime).strftime(self._start_format)
+        else:
+            # Convert date to datetime
+            return dateutil.parser.parse(self._item.due.date).strftime(self._start_format)
+    
+    @property
+    def start_date(self):
+        if self._item.due.datetime:
+            return dateutil.parser.parse(self._item.due.datetime).date()
+        else:
+            # Convert date to datetime
+            return dateutil.parser.parse(self._item.due.date).date()
+        
+    @property
+    def start_datetime(self):
+        if self._item.due.datetime:
+            return dateutil.parser.parse(self._item.due.datetime)
+        else:
+            # Convert date to datetime
+            return dateutil.parser.parse(self._item.due.date)
+    
+    @property
+    def end(self):
+        return self._item.due.date
+    
+    @property
+    def colors(self):
+        return self._calendars.todoist_colors[self._project_id], [0, 0, 0]
+    
+    @property
+    def organizer(self):
+        if self._item.creator_id in self._calendars.todoist_collaborators[self._project_id]:
+            return self._calendars.todoist_collaborators[self._project_id][self._item.creator_id].name
+        else:
+            return self._item.creator_id
+    
+    @property
+    def visibility(self):
+        return "N/A"
 
 class Calendars:
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
@@ -33,8 +173,13 @@ class Calendars:
         try:
             temp_projs = self.todoist_api.get_projects()
             self.todoist_projects = {}
+            self.todoist_collaborators = {}
             for project in temp_projs:
+                self.todoist_collaborators[project.id] = {}
                 self.todoist_projects[project.id] = project
+                temp_collabs = self.todoist_api.get_collaborators(project.id)
+                for clist in temp_collabs:
+                    self.todoist_collaborators[project.id][clist.id] = clist
             self.todoist_tasks = self.todoist_api.get_tasks()
         except Exception as error:
             print(f"Error loading tasks from Todoist:\n   {error}")
@@ -136,13 +281,15 @@ class Calendars:
         for calendar_id in self._enabledCalendars:
             these_evs = [ e for e in self.google_events[calendar_id] if (type(e.start)==datetime and e.start.date() == this_date) or 
                                                                         (type(e.start)==type(this_date) and e.start == this_date) ]
-            to_return[calendar_id] = these_evs
+            #to_return[calendar_id] = these_evs
+            to_return[calendar_id] = [ GoogleEvent(e, self, calendar_id) for e in these_evs ]
 
         for project_name in self._enabledProjects:
             project = [ p for p in self.todoist_projects.values() if p.name == project_name ][0]
             these_evs = [ e for e in self.todoist_events[project.id] if (date.fromisoformat(e.due.date) == this_date)]
 
-            to_return[project_name] = these_evs
+            #to_return[project_name] = these_evs
+            to_return[project_name] = [ TodoistEvent(e, self, project.id) for e in these_evs ]
 
         return to_return
     

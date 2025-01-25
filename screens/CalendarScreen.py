@@ -15,7 +15,7 @@ from agents.Calendars import Calendars
 from agents.Lists import Lists
 from Helpers.KivyHelpers import FindDialogRoot, FindChildByID
 from datetime import datetime, date
-import platform
+#import platform
 import pytz
 
 class CalendarScreen(MDScreen):
@@ -37,10 +37,10 @@ class CalendarScreen(MDScreen):
 
         self._displayDays = self._calendars.displayDays
 
-        if platform.system() in ('Linux'):
-            self._start_format = "%-I:%M%p"
-        else:
-            self._start_format = "%#I:%M%p"
+        #if platform.system() in ('Linux'):
+        #    self._start_format = "%-I:%M%p"
+        #else:
+        #    self._start_format = "%#I:%M%p"
 
     def on_kv_post(self, base_widget):
         self.update()
@@ -80,32 +80,43 @@ class CalendarScreen(MDScreen):
             for calendar_id in cal_events:
                 ## TODO: Sort so all-day events show up first
                 for ev in cal_events[calendar_id]:
-                    if calendar_id in self._calendars.google_colors:
-                        cal_color_bg, cal_color_fg = self._calendars.google_colors[calendar_id].values()
-                        if type(ev.end) == datetime:
-                            if ev.end.replace(tzinfo=pytz.utc) < self._calendars.now.replace(tzinfo=pytz.utc):
-                                ev_lbl = CalendarEvent(text=f"[s]{ev.start.strftime(self._start_format)} {ev.summary}[/s]", fgcolor=cal_color_fg, bgcolor=cal_color_bg, calendar_id=calendar_id, event=ev, screen=self)
-                            else:
-                                ev_lbl = CalendarEvent(text=f"[b]{ev.start.strftime(self._start_format)} {ev.summary}[/b]", fgcolor=cal_color_fg, bgcolor=cal_color_bg, calendar_id=calendar_id, event=ev, screen=self)
+                    bgcolor, fgcolor = ev.colors
+                    if type(ev.end) == datetime:
+                        if ev.end.replace(tzinfo=pytz.utc) < self._calendars.now.replace(tzinfo=pytz.utc):
+                            ev_lbl = CalendarItem(text=f"[s]{ev.start_pretty} {ev.name}[/s]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
                         else:
-                            # All-day even, using 'start' since 'end' is on the next day
-                            if ev.start < self._calendars.now.date():
-                                ev_lbl = CalendarEvent(text=f"[s]{ev.summary}[/s]", fgcolor=cal_color_fg, bgcolor=cal_color_bg, calendar_id=calendar_id, event=ev, screen=self)
-                            else:
-                                ev_lbl = CalendarEvent(text=f"[b]{ev.summary}[/b]", fgcolor=cal_color_fg, bgcolor=cal_color_bg, calendar_id=calendar_id, event=ev, screen=self)
+                            ev_lbl = CalendarItem(text=f"[b]{ev.start_pretty} {ev.name}[/b]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
                     else:
-                        project = [ p for p in self._calendars.todoist_projects.values() if p.name == calendar_id ][0]
-                        bgcolor = self._calendars.todoist_colors[project.id]
-                        if ev.due.datetime:
-                            stime = datetime.fromisoformat(ev.due.datetime).strftime(self._start_format)
-                            stime = f"{stime} "
+                        # All-day event, using 'start' since 'end' is on the next day
+                        if ev.start_date < self._calendars.now.date():
+                            ev_lbl = CalendarItem(text=f"[s]{ev.name}[/s]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
                         else:
-                            stime = ''
-
-                        if date.fromisoformat(ev.due.date) < self._calendars.now.date():
-                            ev_lbl = CalendarEvent(text=f"[s]{stime}{ev.content}[/s]", bgcolor=bgcolor, fgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
-                        else:
-                            ev_lbl = CalendarEvent(text=f"[b]{stime}{ev.content}[/b]", bgcolor=bgcolor, fgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+                            ev_lbl = CalendarItem(text=f"[b]{ev.name}[/b]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+#                    if calendar_id in self._calendars.google_colors:
+#                        if type(ev.end) == datetime:
+#                            if ev.end.replace(tzinfo=pytz.utc) < self._calendars.now.replace(tzinfo=pytz.utc):
+#                                ev_lbl = CalendarItem(text=f"[s]{ev.start_pretty} {ev.name}[/s]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+#                            else:
+#                                ev_lbl = CalendarItem(text=f"[b]{ev.start_pretty} {ev.name}[/b]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+#                        else:
+#                            # All-day even, using 'start' since 'end' is on the next day
+#                            if ev.start < self._calendars.now.date():
+#                                ev_lbl = CalendarItem(text=f"[s]{ev.name}[/s]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+#                            else:
+#                                ev_lbl = CalendarItem(text=f"[b]{ev.name}[/b]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+#                    else:
+#                        project = [ p for p in self._calendars.todoist_projects.values() if p.name == calendar_id ][0]
+#                        bgcolor = self._calendars.todoist_colors[project.id]
+#                        if ev.due.datetime:
+#                            stime = datetime.fromisoformat(ev.due.datetime).strftime(self._start_format)
+#                            stime = f"{stime} "
+#                        else:
+#                            stime = ''
+#
+#                        if date.fromisoformat(ev.due.date) < self._calendars.now.date():
+#                            ev_lbl = CalendarItem(text=f"[s]{stime}{ev.content}[/s]", bgcolor=bgcolor, fgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+#                        else:
+#                            ev_lbl = CalendarItem(text=f"[b]{stime}{ev.content}[/b]", bgcolor=bgcolor, fgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
 
                     this_layout = MDBoxLayout(orientation='horizontal')
                     blt = Bullet(size_hint=(0.08, None))
@@ -149,7 +160,7 @@ class CalendarDay(CalendarDayBase):
 class CalendarDayPast(CalendarDay):
     pass
 
-class CalendarEvent(MDLabel):
+class CalendarItem(MDLabel):
     def __init__(self, bgcolor, fgcolor, calendar_id, event, screen, **kwargs):
         super().__init__(**kwargs)
         self._bgcolor = bgcolor
@@ -199,7 +210,7 @@ class CalendarEvent(MDLabel):
         MDDialog(
             MDDialogHeadlineText(text=f"Editing {self.text}"),
             MDDialogContentContainer(
-                MDTextField(MDTextFieldHintText(text="Name"), text=self._event.summary, id="Name"),
+                MDTextField(MDTextFieldHintText(text="Name"), text=self._event.name, id="Name"),
             ),
             MDDialogButtonContainer(
                MDButton(
@@ -238,18 +249,13 @@ class CalendarEvent(MDLabel):
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            if self._event.default_reminders:
-                reminder = "10 minutes before"
-            elif len(self._event.reminders) > 0:
-                reminder = self._event.reminders[0]
-            else:
-                reminder = "None"
-
-            is_recurr = self._event.recurring_event_id != None
+            reminder = self._event.reminders
+            is_recurr = self._event.is_recurring
+            start_time = self._event.start_datetime
 
             MDDialog(
                 MDDialogHeadlineText(text=self.text),
-                MDDialogSupportingText(text=self._event.start.strftime("%a %b %d, %Y - %I:%M %p")),
+                MDDialogSupportingText(text=self._event.start_pretty),
                 MDDialogContentContainer(
                     MDListItem(
                         MDListItemSupportingText(text=f"Organizer: {self._event.organizer}"),
