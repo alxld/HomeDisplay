@@ -1,5 +1,6 @@
 import keyring
 import sys
+import socket
 
 user_email = "aarondeno11@gmail.com"
 
@@ -15,4 +16,8 @@ except Exception as error:
     print(f"Error getting Todoist API key from keyring:\n   {error}")
     sys.exit(-1)
 
-fullscreen = False
+# Fullscreen on my release machines
+if socket.gethostname() == "sabertooth":
+    fullscreen = False
+else:
+    fullscreen = True
