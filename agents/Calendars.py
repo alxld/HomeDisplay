@@ -71,11 +71,15 @@ class GoogleEvent(CalendarEvent):
     
     @property
     def organizer(self):
-        return self._item.organizer
+        return self._item.organizer.display_name
     
     @property
     def visibility(self):
         return self._item.visibility
+    
+    @property
+    def description(self):
+        return self._item.description
 
 
 class TodoistEvent(CalendarEvent):
@@ -145,6 +149,10 @@ class TodoistEvent(CalendarEvent):
     @property
     def visibility(self):
         return "N/A"
+    
+    @property
+    def description(self):
+        return self._item.description
 
 class Calendars:
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}

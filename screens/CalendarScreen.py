@@ -252,6 +252,7 @@ class CalendarItem(MDLabel):
             reminder = self._event.reminders
             is_recurr = self._event.is_recurring
             start_time = self._event.start_datetime
+            descr = self._event.description
 
             MDDialog(
                 MDDialogHeadlineText(text=self.text),
@@ -262,6 +263,9 @@ class CalendarItem(MDLabel):
                     ),
                     MDListItem(
                         MDListItemSupportingText(text=f"Reminder: {reminder}")
+                    ),
+                    MDListItem(
+                        MDListItemSupportingText(text=f"Description: {descr}")
                     ),
                     MDDivider(),
                     MDListItem(
