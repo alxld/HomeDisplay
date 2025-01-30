@@ -15,7 +15,6 @@ def on_message(client, userdata, msg):
         monitor_off()
 
 try:
-    monitorcontrol = monitorcontrol.MonitorControl()
     monitors = monitorcontrol.get_monitors()
     print(monitors)
 except Exception as error:
