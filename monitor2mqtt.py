@@ -26,12 +26,12 @@ def on_subscribe(client, userdata, mid, granted_qos):
 def monitor_on():
     for monitor in monitors:
         with monitor:
-            monitor.set_power_mode(monitorcontrol.PowerMode.ON)
+            monitor.set_power_mode(1)
 
 def monitor_off():
     for monitor in monitors:
         with monitor:
-            monitor.set_power_mode(monitorcontrol.PowerMode.OFF)
+            monitor.set_power_mode(4)
 
 client = mqtt.Client()
 client.on_connect = on_connect
