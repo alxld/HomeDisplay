@@ -1,5 +1,5 @@
 import paho.mqtt.client as mqtt
-import monitorcontrol
+from monitorcontrol import monitorcontrol
 from globals import mqtt_name, mosquitto_ip, mosquitto_username, mosquitto_password
 import sys
 
