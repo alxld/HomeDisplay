@@ -21,3 +21,12 @@ if socket.gethostname() == "sabertooth":
     fullscreen = False
 else:
     fullscreen = True
+
+# MQTT naming
+mqtt_base = "alxld"
+mqtt_mid = "HomeDisplay"
+mqtt_suffix = "Kitchen"
+mqtt_name = f"{mqtt_base}/{mqtt_mid}/{mqtt_suffix}"
+mosquitto_ip = "192.168.1.7"
+mosquitto_username = "hass"
+mosquitto_password = keyring.get_password("mosquitto", "hass")
