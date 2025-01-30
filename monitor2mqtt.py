@@ -40,6 +40,7 @@ def monitor_off():
 def monitor_dim():
     for monitor in monitors:
         with monitor:
+            monitor.set_power_mode(1)
             monitor.set_luminance(25)
             monitor.set_contrast(0)
 
