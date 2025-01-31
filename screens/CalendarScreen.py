@@ -7,13 +7,14 @@ from kivymd.uix.list import MDList, MDListItem, MDListItemHeadlineText, MDListIt
 from kivymd.uix.label import MDLabel
 from kivymd.uix.widget import MDWidget
 from kivymd.uix.divider import MDDivider
+from kivy.uix.vkeyboard import VKeyboard
 
 from kivy.factory import Factory
 from kivy.graphics import Color, RoundedRectangle
 
 from agents.Calendars import Calendars
 from agents.Lists import Lists
-from Helpers.KivyHelpers import FindDialogRoot, FindChildByID
+from Helpers.KivyHelpers import FindDialogRoot, FindChildByID, FindWindowFromWidget
 from datetime import datetime, date
 #import platform
 import pytz
@@ -204,8 +205,16 @@ class CalendarItem(MDLabel):
 
         self._screen.root.ids.main_screen_manager.get_screen("CalendarScreen").update()
 
+    def on_keyboard_closed(self):
+        print("Keyboard closed")
+
     def edit_event(self, instance):
         FindDialogRoot(instance).dismiss()
+        this_window = FindWindowFromWidget(instance)
+        #self._keyboard = this_window.request_keyboard(self.on_keyboard_closed, instance, 'text')
+        #self._keyboard = VKeyboard()
+        #this_window.release_all_keyboards()
+        #this_window.add_widget(self._keyboard)
 
         MDDialog(
             MDDialogHeadlineText(text=f"Editing {self.text}"),
@@ -221,7 +230,7 @@ class CalendarItem(MDLabel):
                    MDButtonText(text="Save"),
                    on_release=self._save_edit_event
                )
-            )
+            ),
         ).open()
 
     def delete_event(self, instance):
