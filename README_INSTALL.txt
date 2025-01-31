@@ -20,3 +20,7 @@ Go to todoist.com => Click Avatar => Settings => Integrations => Developer and c
 At terminal:
 	keyring set todoist_api aarondeno11@gmai.com
 	<paste api key when asked>
+
+Set up MQTT password:
+At terminal:
+	keyring set mosquitto hass
