@@ -14,6 +14,7 @@
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'multi')
 Config.set('kivy', 'exit_on_escape', 0)
+
 from kivy.core.window import Window
 from kivymd.app import MDApp
 from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem
@@ -29,16 +30,7 @@ class HomeDisplayApp(MDApp):
         #self.fps_monitor_start()
         super(HomeDisplayApp, self).on_start()
 
-    #def build_config(self, config):
-    #    config.setdefaults('kivy', {
-    #        'keyboard_mode': 'dock'
-    #    })
-    #    Config.write()
-
     def build(self):
-        #Config.read('homedisplay.ini')
-        #config = self.config
-        print(Config.get('kivy', 'keyboard_mode'))
         Window.size=(1920, 1080)
         Window.fullscreen = fullscreen
     #    cdl = self.root.ids.calendar_day_layout

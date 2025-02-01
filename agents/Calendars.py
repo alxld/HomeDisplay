@@ -155,6 +155,8 @@ class TodoistEvent(CalendarEvent):
         return self._item.description
 
 class Calendars:
+    google_enabled = False
+    todoist_enabled = True
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
     def __init__(self):
         self._displayDates = []
@@ -162,47 +164,50 @@ class Calendars:
         self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
 
         # Connect to Todoist
-        try:
-            self.todoist_api = TodoistAPI(todoist_api_key)
-        except Exception as error:
-            print(f"Error logging into to Todoist:\n   {error}")
-            sys.exit(-1)
+        if Calendars.todoist_enabled:
+            try:
+                self.todoist_api = TodoistAPI(todoist_api_key)
+            except Exception as error:
+                print(f"Error logging into to Todoist:\n   {error}")
+                sys.exit(-1)
 
         # Connect to Google Calendar
-        try:
-            self.gcal = GoogleCalendar(user_email)
-        except Exception as error:
-            print(f"Error logging into to Google Calendar:\n   {error}")
-            sys.exit(-1)
+        if Calendars.google_enabled:
+            try:
+                self.gcal = GoogleCalendar(user_email)
+            except Exception as error:
+                print(f"Error logging into to Google Calendar:\n   {error}")
+                sys.exit(-1)
 
         self.update()
 
     def update(self):
-        try:
-            temp_projs = self.todoist_api.get_projects()
-            self.todoist_projects = {}
-            self.todoist_collaborators = {}
-            for project in temp_projs:
-                self.todoist_collaborators[project.id] = {}
-                self.todoist_projects[project.id] = project
-                temp_collabs = self.todoist_api.get_collaborators(project.id)
-                for clist in temp_collabs:
-                    self.todoist_collaborators[project.id][clist.id] = clist
-            self.todoist_tasks = self.todoist_api.get_tasks()
-        except Exception as error:
-            print(f"Error loading tasks from Todoist:\n   {error}")
-            sys.exit(-1)
+        if Calendars.todoist_enabled:
+            try:
+                temp_projs = self.todoist_api.get_projects()
+                self.todoist_projects = {}
+                self.todoist_collaborators = {}
+                for project in temp_projs:
+                    self.todoist_collaborators[project.id] = {}
+                    self.todoist_projects[project.id] = project
+                    temp_collabs = self.todoist_api.get_collaborators(project.id)
+                    for clist in temp_collabs:
+                        self.todoist_collaborators[project.id][clist.id] = clist
+                self.todoist_tasks = self.todoist_api.get_tasks()
+            except Exception as error:
+                print(f"Error loading tasks from Todoist:\n   {error}")
+                sys.exit(-1)
 
-        self.todoist_colors = {}
-        for project in temp_projs:
-            if project.color in Calendars.color_overrides:
-                self.todoist_colors[project.id] = Calendars.color_overrides[project.color]
-            else:
-                try:
-                    self.todoist_colors[project.id] = [ c/255. for c in webcolors.name_to_rgb(project.color) ]
-                except:
-                    sub_color = project.color.replace('_', '')
-                    self.todoist_colors[project.id] = [ c/255. for c in webcolors.name_to_rgb(sub_color) ]
+            self.todoist_colors = {}
+            for project in temp_projs:
+                if project.color in Calendars.color_overrides:
+                    self.todoist_colors[project.id] = Calendars.color_overrides[project.color]
+                else:
+                    try:
+                        self.todoist_colors[project.id] = [ c/255. for c in webcolors.name_to_rgb(project.color) ]
+                    except:
+                        sub_color = project.color.replace('_', '')
+                        self.todoist_colors[project.id] = [ c/255. for c in webcolors.name_to_rgb(sub_color) ]
 
         self._displayDates = []
 
@@ -230,39 +235,41 @@ class Calendars:
             return (r/255, g/255, b/255, 1)
             #return f"#{r:02x}{g:02x}{b:02x}"
 
-        self.google_colors = {}
-        for calendar_id in self._enabledCalendars:
-            cid = self.gcal.get_calendar_list_entry(calendar_id).color_id
-            color = self.gcal.list_calendar_colors()[cid]
-            color['background'] = scale_color(color['background'], 0.7)
-            color['foreground'] = scale_color(color['foreground'], 1.0)
-            self.google_colors[calendar_id] = color
-
-        #for project_id, project in self.todoist_projects.items():
-        #    if project.name in self._enabledProjects:
-        #        self.todoist_colors[project.id] = project.color
-
         self.google_events = {}
-        try:
+        if Calendars.google_enabled:
+            self.google_colors = {}
             for calendar_id in self._enabledCalendars:
-                these_events = self.gcal.get_events(self._displayDates[0], self._displayDates[-1], single_events=True, calendar_id = calendar_id)
-                self.google_events[calendar_id] = list(these_events)
-        except Exception as error:
-            print(f"Error loading Google Calendar:\n   {error}")
-            sys.exit(-1)
+                cid = self.gcal.get_calendar_list_entry(calendar_id).color_id
+                color = self.gcal.list_calendar_colors()[cid]
+                color['background'] = scale_color(color['background'], 0.7)
+                color['foreground'] = scale_color(color['foreground'], 1.0)
+                self.google_colors[calendar_id] = color
+    
+            #for project_id, project in self.todoist_projects.items():
+            #    if project.name in self._enabledProjects:
+            #        self.todoist_colors[project.id] = project.color
+    
+            try:
+                for calendar_id in self._enabledCalendars:
+                    these_events = self.gcal.get_events(self._displayDates[0], self._displayDates[-1], single_events=True, calendar_id = calendar_id)
+                    self.google_events[calendar_id] = list(these_events)
+            except Exception as error:
+                print(f"Error loading Google Calendar:\n   {error}")
+                sys.exit(-1)
 
         self.todoist_events = {}
-        try:
-            for project_id in [ p for p in self.todoist_projects if self.todoist_projects[p].name in self._enabledProjects ]:
-                project = self.todoist_projects[project_id]
-                these_events = [ t for t in self.todoist_tasks if t.project_id == project_id ]
-                these_events = [ ev for ev in these_events if hasattr(ev.due, 'date') ]
-                these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) >= self._displayDates[0] ]
-                these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) <= self._displayDates[-1] ]
-                self.todoist_events[project_id] = these_events
-        except Exception as error:
-            print(f"Error loading Todoist Calendar:\n   {error}")
-            sys.exit(-1)
+        if Calendars.todoist_enabled:
+            try:
+                for project_id in [ p for p in self.todoist_projects if self.todoist_projects[p].name in self._enabledProjects ]:
+                    project = self.todoist_projects[project_id]
+                    these_events = [ t for t in self.todoist_tasks if t.project_id == project_id ]
+                    these_events = [ ev for ev in these_events if hasattr(ev.due, 'date') ]
+                    these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) >= self._displayDates[0] ]
+                    these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) <= self._displayDates[-1] ]
+                    self.todoist_events[project_id] = these_events
+            except Exception as error:
+                print(f"Error loading Todoist Calendar:\n   {error}")
+                sys.exit(-1)
 
         #print()
         #self.todoist_api.sync()
@@ -286,18 +293,20 @@ class Calendars:
 
     def events(self, this_date):
         to_return = {}
-        for calendar_id in self._enabledCalendars:
-            these_evs = [ e for e in self.google_events[calendar_id] if (type(e.start)==datetime and e.start.date() == this_date) or 
-                                                                        (type(e.start)==type(this_date) and e.start == this_date) ]
-            #to_return[calendar_id] = these_evs
-            to_return[calendar_id] = [ GoogleEvent(e, self, calendar_id) for e in these_evs ]
+        if Calendars.google_enabled:
+            for calendar_id in self._enabledCalendars:
+                these_evs = [ e for e in self.google_events[calendar_id] if (type(e.start)==datetime and e.start.date() == this_date) or 
+                                                                            (type(e.start)==type(this_date) and e.start == this_date) ]
+                #to_return[calendar_id] = these_evs
+                to_return[calendar_id] = [ GoogleEvent(e, self, calendar_id) for e in these_evs ]
 
-        for project_name in self._enabledProjects:
-            project = [ p for p in self.todoist_projects.values() if p.name == project_name ][0]
-            these_evs = [ e for e in self.todoist_events[project.id] if (date.fromisoformat(e.due.date) == this_date)]
-
-            #to_return[project_name] = these_evs
-            to_return[project_name] = [ TodoistEvent(e, self, project.id) for e in these_evs ]
+        if Calendars.todoist_enabled:
+            for project_name in self._enabledProjects:
+                project = [ p for p in self.todoist_projects.values() if p.name == project_name ][0]
+                these_evs = [ e for e in self.todoist_events[project.id] if (date.fromisoformat(e.due.date) == this_date)]
+    
+                #to_return[project_name] = these_evs
+                to_return[project_name] = [ TodoistEvent(e, self, project.id) for e in these_evs ]
 
         return to_return
     
