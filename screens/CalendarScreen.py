@@ -9,6 +9,7 @@ from kivymd.uix.widget import MDWidget
 from kivymd.uix.divider import MDDivider
 from kivy.uix.vkeyboard import VKeyboard
 
+from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.graphics import Color, RoundedRectangle
 from kivy.core.window import Window
@@ -45,6 +46,10 @@ class CalendarScreen(MDScreen):
         #    self._start_format = "%#I:%M%p"
 
     def on_kv_post(self, base_widget):
+        self.update()
+        Clock.schedule_interval(self.update_callback, 15*60)
+
+    def update_callback(self, dt):
         self.update()
 
     def update(self):
