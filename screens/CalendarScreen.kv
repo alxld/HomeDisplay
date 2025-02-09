@@ -1,6 +1,19 @@
 <CalendarDayNameTemplate@MDLabel>:
     adaptive_height: True
     halign: 'center'
+    valign: 'center'
+    padding: [0, 3, 0, 0]
+    canvas.before:
+        Color:
+            rgba: 0.3,0.3,0.3,1
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+        Color:
+            rgba: 0.9,0.9,0.9,1
+        RoundedRectangle:
+            pos: self.x+2, self.y+2
+            size: self.width-4, self.height-4
 
 <CalendarScreen>:
     name: 'CalendarScreen'
@@ -10,17 +23,30 @@
 
         MDBoxLayout:
             orientation: 'vertical'
-            MDLabel:
-                id: calendar_month_label
-                font_style: 'Display'
-                role: 'large'
-                bold: True
-                text: "MONTH YEAR"
-                halign: 'center'
-                valign: "top"
-                adaptive_size: True
-                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            MDBoxLayout:
+                orientation: 'horizontal'
+                size_hint_x: 1
+                size_hint_y: None
+                height: self.minimum_height
 
+                MDIconButton:
+                    icon: "refresh"
+                    on_release: root.update()
+                    size_hint_x: None
+                    size_hint_y: 1.0
+                    width: dp(48)
+                    valign: 'center'
+                MDLabel:
+                    id: calendar_month_label
+                    font_style: 'Display'
+                    role: 'large'
+                    bold: True
+                    text: "MONTH YEAR"
+                    halign: 'center'
+                    valign: "top"
+                    adaptive_size: True
+                    size_hint_x: 1.0
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
             MDGridLayout:
                 id: calendar_day_layout
                 rows: 6

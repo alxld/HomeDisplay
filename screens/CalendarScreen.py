@@ -11,6 +11,7 @@ from kivy.uix.vkeyboard import VKeyboard
 
 from kivy.factory import Factory
 from kivy.graphics import Color, RoundedRectangle
+from kivy.core.window import Window
 
 from agents.Calendars import Calendars
 from agents.Lists import Lists
@@ -47,6 +48,8 @@ class CalendarScreen(MDScreen):
         self.update()
 
     def update(self):
+        Window.set_system_cursor('wait')
+        self._calendars.update()
         self._displayDays = self._calendars.displayDays
 
         cdl = self.ids.calendar_day_layout
@@ -54,6 +57,10 @@ class CalendarScreen(MDScreen):
 
         cdl.clear_widgets()
         cll.clear_widgets()
+
+        # Add day names as CalendayDayNameTemplate's from the Factory
+        for day in ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']:
+            cdl.add_widget(Factory.CalendarDayNameTemplate(text=day))
 
         self.ids.calendar_month_label.text = self._calendars.month_pretty
 
@@ -138,6 +145,7 @@ class CalendarScreen(MDScreen):
 
             cdl.add_widget(cd)
             self.day_widgets.append(cd)
+        Window.set_system_cursor('arrow')
 
 class CalendarDayBase(MDBoxLayout):
     def __init__(self, daynum, **kwargs):
