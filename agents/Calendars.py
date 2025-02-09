@@ -154,6 +154,10 @@ class TodoistEvent(CalendarEvent):
     def description(self):
         return self._item.description
 
+    def moveDateTime(self, new_date):
+        self._item.due.date = new_date
+        self._calendars.todoist_api.commit()
+
 class Calendars:
     google_enabled = False
     todoist_enabled = True
@@ -204,30 +208,10 @@ class Calendars:
     def update(self):
         if Calendars.todoist_enabled:
             try:
-                #temp_projs = self.todoist_api.get_projects()
-                #self.todoist_projects = {}
-                #self.todoist_collaborators = {}
-                #for project in temp_projs:
-                #    self.todoist_collaborators[project.id] = {}
-                #    self.todoist_projects[project.id] = project
-                #    temp_collabs = self.todoist_api.get_collaborators(project.id)
-                #    for clist in temp_collabs:
-                #        self.todoist_collaborators[project.id][clist.id] = clist
                 self.todoist_tasks = self.todoist_api.get_tasks()
             except Exception as error:
                 print(f"Error loading tasks from Todoist:\n   {error}")
                 sys.exit(-1)
-
-            #self.todoist_colors = {}
-            #for project in temp_projs:
-            #    if project.color in Calendars.color_overrides:
-            #        self.todoist_colors[project.id] = Calendars.color_overrides[project.color]
-            #    else:
-            #        try:
-            #            self.todoist_colors[project.id] = [ c/255. for c in webcolors.name_to_rgb(project.color) ]
-            #        except:
-            #            sub_color = project.color.replace('_', '')
-            #            self.todoist_colors[project.id] = [ c/255. for c in webcolors.name_to_rgb(sub_color) ]
 
         self._displayDates = []
 

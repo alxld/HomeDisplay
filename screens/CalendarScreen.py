@@ -8,16 +8,18 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.widget import MDWidget
 from kivymd.uix.divider import MDDivider
 from kivy.uix.vkeyboard import VKeyboard
+from kivymd.uix.pickers import MDModalDatePicker, MDDockedDatePicker, MDTimePickerDialHorizontal
 
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.graphics import Color, RoundedRectangle
 from kivy.core.window import Window
+from kivy.config import Config
 
 from agents.Calendars import Calendars
 from agents.Lists import Lists
 from Helpers.KivyHelpers import FindDialogRoot, FindChildByID, FindWindowFromWidget
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, time
 #import platform
 import pytz
 
@@ -224,15 +226,16 @@ class CalendarItem(MDLabel):
     def edit_event(self, instance):
         FindDialogRoot(instance).dismiss()
         this_window = FindWindowFromWidget(instance)
-        #self._keyboard = this_window.request_keyboard(self.on_keyboard_closed, instance, 'text')
-        #self._keyboard = VKeyboard()
-        #this_window.release_all_keyboards()
-        #this_window.add_widget(self._keyboard)
+        start_datetime = self._event.start_datetime
 
-        MDDialog(
+        self._dlg = MDDialog(
             MDDialogHeadlineText(text=f"Editing {self.text}"),
             MDDialogContentContainer(
-                MDTextField(MDTextFieldHintText(text="Name"), text=self._event.name, id="Name"),
+                MDTextField(MDTextFieldHintText(text="Name"), text=self._event.name, id="Name", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Description"), text=self._event.description, id="Description", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Date"), text=start_datetime.strftime("%Y-%m-%d"), id="Date", mode="filled", on_touch_down=self.show_date_picker, readonly=True, focus_behavior=False),
+                MDTextField(MDTextFieldHintText(text="Time"), text=start_datetime.strftime("%H:%M"), id="Time", mode="filled", on_touch_down=self.show_time_picker, readonly=True, focus_behavior=False),
+                orientation="vertical"
             ),
             MDDialogButtonContainer(
                MDButton(
@@ -242,9 +245,14 @@ class CalendarItem(MDLabel):
                MDButton(
                    MDButtonText(text="Save"),
                    on_release=self._save_edit_event
+               ),
+               MDButton(
+                   MDButtonText(text="Tomorrow"),
+                   on_release=self._move_event_tomorrow
                )
             ),
-        ).open()
+        )
+        self._dlg.open()
 
     def delete_event(self, instance):
         FindDialogRoot(instance).dismiss()
@@ -268,6 +276,77 @@ class CalendarItem(MDLabel):
         FindDialogRoot(instance).dismiss()
         # TODO: IMPLEMENT DELETE
         raise NotImplementedError()
+    
+    def show_date_picker(self, instance, touch):
+        if not instance.collide_point(*touch.pos):
+            return False
+
+        start_date = self._event.start_datetime.date()
+        self._dp = MDDockedDatePicker(day=start_date.day, month=start_date.month, year=start_date.year)
+        self._dp.bind(on_ok=self.on_date_selected, on_cancel=self._dp.dismiss)
+        self._dp.open()
+        
+        self._dp.pos = [Window.width/2 - self._dp.width/2, Window.height/2 - self._dp.height/2] 
+
+        return True
+    
+    def show_time_picker(self, instance, touch):
+        if not instance.collide_point(*touch.pos):
+            return False
+
+        start_time = self._event.start_datetime.time()
+        self._tp = MDTimePickerDialHorizontal()
+        self._tp.ids._time_input.ids.minute.bind(on_touch_down=self._switch_to_minutes)
+        self._tp.ids._time_input.ids.hour.bind(on_touch_down=self._switch_to_hours)
+        if start_time.hour == 0:
+            self._tp.set_time(time(12, start_time.minute))
+        else:
+            self._tp.set_time(start_time)
+        if start_time.hour < 12:
+            self._tp.am_pm = "am"
+        else:
+            self._tp.am_pm = "pm"
+        self._tp.bind(on_ok=self.on_time_selected, on_cancel=self._tp.dismiss)
+        #self._tp.bind(on_selector_hour=self._on_selector_hours)
+        self._tp.open()
+
+        self._tp.pos = [Window.width/2 - self._tp.width/2, Window.height/2 - self._tp.height/2]
+
+        self._tp._selector.mode = "hour"
+        
+        return True
+    
+    def _switch_to_minutes(self, instance, other):
+        if self._tp.is_open:
+            self._tp._selector.mode = "minute"
+    
+        return True
+    
+    def _switch_to_hours(self, instance, other):
+        if self._tp.is_open:
+            self._tp._selector.mode = "hour"
+
+        return True
+
+    def on_date_selected(self, dp):
+        date = self._dp.get_date()[0]
+        self._dp.dismiss()
+        start_date_widget = FindChildByID(self._dlg, "Date")
+        start_date_widget.text = date.strftime("%Y-%m-%d")
+
+    def on_time_selected(self, tp):
+        time = self._tp.time
+        self._tp.dismiss()
+        start_time_widget = FindChildByID(self._dlg, "Time")
+        start_time_widget.text = time.strftime("%H:%M")
+    
+    def _move_event_tomorrow(self, instance):
+        FindDialogRoot(instance).dismiss()
+        tomorrow = self._event.start_datetime.date() + timedelta(days=1)
+        self._calendars.move_event(self._event, tomorrow)
+
+    def _do_move_event(self, instance):
+        FindDialogRoot(instance).dismiss()
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
