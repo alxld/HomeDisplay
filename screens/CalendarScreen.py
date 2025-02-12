@@ -314,6 +314,8 @@ class CalendarItem(MDLabel):
             MDDialogContentContainer(
                 MDTextField(MDTextFieldHintText(text="Name"), text=self._event.name, id="Name", mode="filled"),
                 MDTextField(MDTextFieldHintText(text="Description"), text=self._event.description, id="Description", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Date"), text=start_datetime.date().strftime("%Y-%m-%d"), id="Date", mode="filled", on_touch_down=self.show_date_picker, readonly=True, focus_behavior=False),
+                MDTextField(MDTextFieldHintText(text="Time"), text=start_datetime.time().strftime("%H:%M"), id="Time", mode="filled", on_touch_down=self.show_time_picker, readonly=True, focus_behavior=False),
                 orientation="vertical"
             ),
             this_cont
