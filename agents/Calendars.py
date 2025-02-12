@@ -102,6 +102,10 @@ class TodoistEvent(CalendarEvent):
     @property
     def is_recurring(self):
         return self._item.due.is_recurring
+
+    @property
+    def recurrence(self):
+        return self._item.due.string
     
     @property
     def name(self):
@@ -157,7 +161,7 @@ class TodoistEvent(CalendarEvent):
     #def moveDateTime(self, new_date):
     #    self._calendars.todoist_api.update_task(self._item.id, due_date=str(new_date))
 
-    def updateEvent(self, name=None, due_date=None, due_time=None, priority=None, description=None):
+    def updateEvent(self, name=None, due_date=None, due_time=None, priority=None, description=None, recurrence=None):
         if name and name != self._item.content:
             self._calendars.todoist_api.update_task(self._item.id, content=name)
         if due_date or due_time:
@@ -172,9 +176,14 @@ class TodoistEvent(CalendarEvent):
             self._calendars.todoist_api.update_task(self._item.id, priority=priority)
         if description and self._item.description != description:
             self._calendars.todoist_api.update_task(self._item.id, description=description)
+        if recurrence and self._item.due.string != recurrence:
+            self._calendars.todoist_api.update_task(self._item.id, due_string=recurrence)
 
     def deleteEvent(self):
         self._calendars.todoist_api.delete_task(self._item.id)
+
+    def completeEvent(self):
+        self._calendars.todoist_api.close_task(self._item.id)
 
 class Calendars:
     google_enabled = False

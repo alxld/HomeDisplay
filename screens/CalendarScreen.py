@@ -221,6 +221,18 @@ class CalendarItem(MDLabel):
 
         self._screen.update()
 
+    def _save_edit_recurring_event(self, instance):
+        dlrt = FindDialogRoot(instance)
+        dlrt.dismiss()
+
+        name = FindChildByID(dlrt, "Name").text
+        descr = FindChildByID(dlrt, "Description").text
+        recstr = FindChildByID(dlrt, "Recurrence").text
+
+        self._event.updateEvent(name=name, description=descr, recurrence=recstr)
+
+        self._screen.update()
+
     def on_keyboard_closed(self):
         print("Keyboard closed")
 
@@ -272,6 +284,33 @@ class CalendarItem(MDLabel):
             this_cont
         )
         self._dlg.open()
+
+    def edit_recurring_event(self, instance):
+        FindDialogRoot(instance).dismiss()
+        this_window = FindWindowFromWidget(instance)
+        start_datetime = self._event.start_datetime
+
+        self._dlg = MDDialog(
+            MDDialogHeadlineText(text=f"Editing {self.text}"),
+            MDDialogContentContainer(
+                MDTextField(MDTextFieldHintText(text="Name"), text=self._event.name, id="Name", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Description"), text=self._event.description, id="Description", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Recurrence"), text=self._event.recurrence, id="Recurrence", mode="filled"),
+                orientation="vertical"
+            ),
+            MDDialogButtonContainer(
+               MDButton(
+                   MDButtonText(text="Cancel"),
+                   on_release=lambda x: FindDialogRoot(x).dismiss()
+               ),
+               MDButton(
+                   MDButtonText(text="Save"),
+                   on_release=self._save_edit_recurring_event
+               )
+            )
+        )
+        self._dlg.open()
+
 
     def delete_event(self, instance):
         FindDialogRoot(instance).dismiss()
@@ -372,6 +411,11 @@ class CalendarItem(MDLabel):
         #self._event.moveDateTime(today)
         self._screen.update()
 
+    def _mark_event_complete(self, instance):
+        FindDialogRoot(instance).dismiss()
+        self._event.completeEvent()
+        self._screen.update()
+
     def _do_move_event(self, instance):
         FindDialogRoot(instance).dismiss()
 
@@ -382,52 +426,115 @@ class CalendarItem(MDLabel):
             start_time = self._event.start_datetime
             descr = self._event.description
 
-            if start_time.date() == datetime.now().date():
-                this_cont = MDDialogButtonContainer(
-                    MDButton(
-                        MDButtonText(text="Edit"),
-                        style="text",
-                        on_release=self.edit_event
-                    ),
-                    MDButton(
-                        MDButtonText(text="Delete"),
-                        style="text",
-                        on_release=self.delete_event
-                    ),
-                    MDButton(
-                        MDButtonText(text="Close"),
-                        style="text",
-                        on_release=lambda x: FindDialogRoot(x).dismiss()
-                    ),
-                    MDButton(
-                        MDButtonText(text="Tomorrow"),
-                        style="text",
-                        on_release=self._move_event_tomorrow
-                    )
-                )
+            if is_recurr:
+                recurr_text = f"{True} ({self._event.recurrence})"
             else:
-                this_cont = MDDialogButtonContainer(
-                    MDButton(
-                        MDButtonText(text="Edit"),
-                        style="text",
-                        on_release=self.edit_event
-                    ),
-                    MDButton(
-                        MDButtonText(text="Delete"),
-                        style="text",
-                        on_release=self.delete_event
-                    ),
-                    MDButton(
-                        MDButtonText(text="Close"),
-                        style="text",
-                        on_release=lambda x: FindDialogRoot(x).dismiss()
-                    ),
-                    MDButton(
-                        MDButtonText(text="Today"),
-                        style="text",
-                        on_release=self._move_event_today
+                recurr_text = False
+
+            if start_time.date() == datetime.now().date():
+                if is_recurr:
+                    this_cont = MDDialogButtonContainer(
+                        MDButton(
+                            MDButtonText(text="Edit"),
+                            style="text",
+                            on_release=self.edit_recurring_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Delete"),
+                            style="text",
+                            on_release=self.delete_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Close"),
+                            style="text",
+                            on_release=lambda x: FindDialogRoot(x).dismiss()
+                        ),
+                        MDButton(
+                            MDButtonText(text="Tomorrow"),
+                            style="text",
+                            on_release=self._move_event_tomorrow
+                        ),
+                        MDButton(
+                            MDButtonText(text="Complete"),
+                            style="text",
+                            on_release=self._mark_event_complete
+                        )
                     )
-                )
+                else:
+                    this_cont = MDDialogButtonContainer(
+                        MDButton(
+                            MDButtonText(text="Edit"),
+                            style="text",
+                            on_release=self.edit_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Delete"),
+                            style="text",
+                            on_release=self.delete_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Close"),
+                            style="text",
+                            on_release=lambda x: FindDialogRoot(x).dismiss()
+                        ),
+                        MDButton(
+                            MDButtonText(text="Tomorrow"),
+                            style="text",
+                            on_release=self._move_event_tomorrow
+                        )
+                    )
+            else:
+                if is_recurr:
+                    this_cont = MDDialogButtonContainer(
+                        MDButton(
+                            MDButtonText(text="Edit"),
+                            style="text",
+                            on_release=self.edit_recurring_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Delete"),
+                            style="text",
+                            on_release=self.delete_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Close"),
+                            style="text",
+                            on_release=lambda x: FindDialogRoot(x).dismiss()
+                        ),
+                        MDButton(
+                            MDButtonText(text="Today"),
+                            style="text",
+                            on_release=self._move_event_today
+                        ),
+                        MDButton(
+                            MDButtonText(text="Complete"),
+                            style="text",
+                            on_release=self._mark_event_complete
+                        )
+                    )
+                else:
+                    this_cont = MDDialogButtonContainer(
+                        MDButton(
+                            MDButtonText(text="Edit"),
+                            style="text",
+                            on_release=self.edit_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Delete"),
+                            style="text",
+                            on_release=self.delete_event
+                        ),
+                        MDButton(
+                            MDButtonText(text="Close"),
+                            style="text",
+                            on_release=lambda x: FindDialogRoot(x).dismiss()
+                        ),
+                        MDButton(
+                            MDButtonText(text="Today"),
+                            style="text",
+                            on_release=self._move_event_today
+                        )
+                    )
 
             MDDialog(
                 MDDialogHeadlineText(text=self.text),
@@ -441,6 +548,9 @@ class CalendarItem(MDLabel):
                     ),
                     MDListItem(
                         MDListItemSupportingText(text=f"Description: {descr}")
+                    ),
+                    MDListItem(
+                        MDListItemSupportingText(text=f"Recurring: {recurr_text}")
                     ),
                     MDDivider(),
                     MDListItem(
