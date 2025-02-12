@@ -155,8 +155,7 @@ class TodoistEvent(CalendarEvent):
         return self._item.description
 
     def moveDateTime(self, new_date):
-        self._item.due.date = new_date
-        self._calendars.todoist_api.commit()
+        self._calendars.todoist_api.update_task(self._item.id, due_date=str(new_date))
 
 class Calendars:
     google_enabled = False
