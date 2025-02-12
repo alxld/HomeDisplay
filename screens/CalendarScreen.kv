@@ -31,11 +31,13 @@
 
                 MDIconButton:
                     icon: "refresh"
+                    style: 'outlined'
                     on_release: root.update()
                     size_hint_x: None
                     size_hint_y: 1.0
                     width: dp(48)
                     valign: 'center'
+                    icon_size: dp(60)
                 MDLabel:
                     id: calendar_month_label
                     font_style: 'Display'
@@ -47,6 +49,15 @@
                     adaptive_size: True
                     size_hint_x: 1.0
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                MDIconButton:
+                    icon: "plus"
+                    style: 'outlined'
+                    on_release: root.add_event()
+                    size_hint_x: None
+                    size_hint_y: 1.0
+                    width: dp(48)
+                    valign: 'center'
+                    icon_size: dp(80)
             MDGridLayout:
                 id: calendar_day_layout
                 rows: 6

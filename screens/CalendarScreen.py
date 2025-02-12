@@ -154,6 +154,43 @@ class CalendarScreen(MDScreen):
             self.day_widgets.append(cd)
         Window.set_system_cursor('arrow')
 
+    def add_event(self):
+        MDDialog(
+            MDDialogHeadlineText(text="Add Event"),
+            MDDialogContentContainer(
+                MDTextField(MDTextFieldHintText(text="Name"), id="Name", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Description"), id="Description", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Date"), mode="filled", id="Date"),
+                MDTextField(MDTextFieldHintText(text="Time"), mode="filled", id="Time"),
+                MDTextField(MDTextFieldHintText(text="Recurrence"), mode="filled", id="Recurrence"),
+                orientation="vertical"
+            ),
+            MDDialogButtonContainer(
+                MDButton(
+                    MDButtonText(text="Cancel"),
+                    on_release=lambda x: FindDialogRoot(x).dismiss()
+                ),
+                MDButton(
+                    MDButtonText(text="Save"),
+                    on_release=self._save_new_event
+                )
+            )
+        ).open()
+
+    def _save_new_event(self, instance):
+        dlrt = FindDialogRoot(instance)
+        dlrt.dismiss()
+
+        name = FindChildByID(dlrt, "Name").text
+        descr = FindChildByID(dlrt, "Description").text
+        date = FindChildByID(dlrt, "Date").text
+        time = FindChildByID(dlrt, "Time").text
+        recstr = FindChildByID(dlrt, "Recurrence").text
+
+        self._calendars.addTodoistEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr)
+        
+        self.update()
+
 class CalendarDayBase(MDBoxLayout):
     def __init__(self, daynum, **kwargs):
         super().__init__(**kwargs)
@@ -277,8 +314,6 @@ class CalendarItem(MDLabel):
             MDDialogContentContainer(
                 MDTextField(MDTextFieldHintText(text="Name"), text=self._event.name, id="Name", mode="filled"),
                 MDTextField(MDTextFieldHintText(text="Description"), text=self._event.description, id="Description", mode="filled"),
-                MDTextField(MDTextFieldHintText(text="Date"), text=start_datetime.strftime("%Y-%m-%d"), id="Date", mode="filled", on_touch_down=self.show_date_picker, readonly=True, focus_behavior=False),
-                MDTextField(MDTextFieldHintText(text="Time"), text=start_datetime.strftime("%H:%M"), id="Time", mode="filled", on_touch_down=self.show_time_picker, readonly=True, focus_behavior=False),
                 orientation="vertical"
             ),
             this_cont

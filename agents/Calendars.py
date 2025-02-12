@@ -164,6 +164,8 @@ class TodoistEvent(CalendarEvent):
     def updateEvent(self, name=None, due_date=None, due_time=None, priority=None, description=None, recurrence=None):
         if name and name != self._item.content:
             self._calendars.todoist_api.update_task(self._item.id, content=name)
+
+        new_due = None
         if due_date or due_time:
             if due_date and due_time:
                 new_due = datetime.strptime(f"{due_date} {due_time}", "%Y-%m-%d %H:%M")
@@ -171,7 +173,7 @@ class TodoistEvent(CalendarEvent):
                 new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
             elif due_time:
                 new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
-            blah = self._calendars.todoist_api.update_task(self._item.id, due_datetime=new_due.isoformat())
+            self._calendars.todoist_api.update_task(self._item.id, due_datetime=new_due.isoformat())
         if priority and self._item.priority != priority:
             self._calendars.todoist_api.update_task(self._item.id, priority=priority)
         if description and self._item.description != description:
@@ -184,6 +186,29 @@ class TodoistEvent(CalendarEvent):
 
     def completeEvent(self):
         self._calendars.todoist_api.close_task(self._item.id)
+
+    def addEvent(self, name=None, due_date=None, due_time=None, priority=None, description=None, recurrence=None):
+        new_due = None
+
+        if recurrence:
+            self._calendars.todoist_api.add_task(content=name, 
+                                                priority=priority, 
+                                                description=description, 
+                                                due_string=recurrence)
+        else:
+            if due_date or due_time:
+                if due_date and due_time:
+                    new_due = datetime.strptime(f"{due_date} {due_time}", "%Y-%m-%d %H:%M")
+                elif due_date:
+                    new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
+                elif due_time:
+                    new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
+    
+            self._calendars.todoist_api.add_task(content=name, 
+                                                due_datetime=new_due, 
+                                                priority=priority, 
+                                                description=description, 
+                                                due_string=recurrence)
 
 class Calendars:
     google_enabled = False
@@ -345,6 +370,31 @@ class Calendars:
         event.summary = name
 
         self.gcal.update_event(event)
+
+    def addTodoistEvent(self, name=None, description=None, due_date=None, due_time=None, recurrence=None, priority=None):
+        new_due = None
+
+        if recurrence:
+            resp = self.todoist_api.add_task(content=name, 
+                                             #priority=priority, 
+                                             description=description, 
+                                             due_string=recurrence)
+        
+        else:
+            if due_date or due_time:
+                if due_date and due_time:
+                    new_due = datetime.strptime(f"{due_date} {due_time}", "%Y-%m-%d %H:%M")
+                elif due_date:
+                    new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
+                elif due_time:
+                    new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
+    
+            resp = self.todoist_api.add_task(content=name, 
+                                             due_datetime=new_due, 
+                                             priority=priority, 
+                                             description=description, 
+                                             due_string=recurrence)
+
 
     #def add_item(self, item, platform='todoist'):
     #    if platform == 'todoist':
