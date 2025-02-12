@@ -211,14 +211,15 @@ class CalendarItem(MDLabel):
     def _save_edit_event(self, instance):
         dlrt = FindDialogRoot(instance)
         dlrt.dismiss()
+
         name = FindChildByID(dlrt, "Name").text
+        descr = FindChildByID(dlrt, "Description").text
+        date = FindChildByID(dlrt, "Date").text
+        time = FindChildByID(dlrt, "Time").text
 
-        if self._event.summary != name:
-            self._calendars.update_event(self._event, name)
+        self._event.updateEvent(name=name, description=descr, due_date=date, due_time=time)
 
-        # TODO: Update remaining fields!
-
-        self._screen.root.ids.main_screen_manager.get_screen("CalendarScreen").update()
+        self._screen.update()
 
     def on_keyboard_closed(self):
         print("Keyboard closed")
@@ -290,10 +291,9 @@ class CalendarItem(MDLabel):
         ).open()
 
     def _do_delete_event(self, instance):
-        print("DELETING EVENT")
         FindDialogRoot(instance).dismiss()
-        # TODO: IMPLEMENT DELETE
-        raise NotImplementedError()
+        self._event.deleteEvent()
+        self._screen.update()
     
     def show_date_picker(self, instance, touch):
         if not instance.collide_point(*touch.pos):
@@ -361,13 +361,15 @@ class CalendarItem(MDLabel):
     def _move_event_tomorrow(self, instance):
         FindDialogRoot(instance).dismiss()
         tomorrow = self._event.start_datetime.date() + timedelta(days=1)
-        self._event.moveDateTime(tomorrow)
+        self._event.updateEvent(due_date=str(tomorrow))
+        #self._event.moveDateTime(tomorrow)
         self._screen.update()
 
     def _move_event_today(self, instance):
         FindDialogRoot(instance).dismiss()
         today = datetime.now().date()
-        self._event.moveDateTime(today)
+        self._event.updateEvent(due_date=str(today))
+        #self._event.moveDateTime(today)
         self._screen.update()
 
     def _do_move_event(self, instance):

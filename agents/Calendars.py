@@ -1,7 +1,7 @@
 from todoist_api_python.api import TodoistAPI, Task
 from gcsa.google_calendar import GoogleCalendar
 from gcsa.event import Event
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import keyring
 import sys
 import webcolors
@@ -154,8 +154,27 @@ class TodoistEvent(CalendarEvent):
     def description(self):
         return self._item.description
 
-    def moveDateTime(self, new_date):
-        self._calendars.todoist_api.update_task(self._item.id, due_date=str(new_date))
+    #def moveDateTime(self, new_date):
+    #    self._calendars.todoist_api.update_task(self._item.id, due_date=str(new_date))
+
+    def updateEvent(self, name=None, due_date=None, due_time=None, priority=None, description=None):
+        if name and name != self._item.content:
+            self._calendars.todoist_api.update_task(self._item.id, content=name)
+        if due_date or due_time:
+            if due_date and due_time:
+                new_due = datetime.strptime(f"{due_date} {due_time}", "%Y-%m-%d %H:%M")
+            elif due_date:
+                new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
+            elif due_time:
+                new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
+            blah = self._calendars.todoist_api.update_task(self._item.id, due_datetime=new_due.isoformat())
+        if priority and self._item.priority != priority:
+            self._calendars.todoist_api.update_task(self._item.id, priority=priority)
+        if description and self._item.description != description:
+            self._calendars.todoist_api.update_task(self._item.id, description=description)
+
+    def deleteEvent(self):
+        self._calendars.todoist_api.delete_task(self._item.id)
 
 class Calendars:
     google_enabled = False
