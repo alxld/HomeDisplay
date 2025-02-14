@@ -199,11 +199,13 @@
         padding: dp(5), dp(5)
         orientation: 'vertical'
         MDBoxLayout:
-            size_hint_y: 0.2
+            #size_hint_y: 0.2
+            adaptive_height: True
+            padding: [0,3,0,0]
             orientation: 'horizontal'
             MDLabel:
                 id: list_box_name_label
-                font_style: 'Headline'
+                font_style: 'Title'
                 text: "EMPTY"
                 #adaptive_width: True
                 halign: "left"
@@ -211,7 +213,8 @@
                 pos_hint: {'left_x': 0.0, 'center_y': 0.5}
                 size_hint_x: 0.7
             MDButton:
-                size_hint_x: 0.3
+                #size_hint_x: 0.2
+                #size_hint_y: 0.2
                 style: 'elevated'
                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                 MDButtonIcon:
@@ -223,3 +226,11 @@
             scroll_type: ['bars', 'content']
             MDList:
                 id: list_box_list
+
+<ListBoxItem@MDListItem>:
+    height: dp(32)
+    MDListItemHeadlineText:
+        text: "Empty"
+        id: item_text
+    MDListItemTrailingCheckbox:
+        id: item_cb

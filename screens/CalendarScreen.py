@@ -15,6 +15,7 @@ from kivy.factory import Factory
 from kivy.graphics import Color, RoundedRectangle
 from kivy.core.window import Window
 from kivy.config import Config
+from kivy.metrics import dp
 
 from agents.Calendars import Calendars
 from agents.Lists import Lists
@@ -34,11 +35,11 @@ class CalendarScreen(MDScreen):
 
         self.list_widgets = {}
 
-        self._lists = {}
-        self._lists['ABC List'] = ['abc', 'def', 'ghi', 'jkl', 'mno', 'pqr', 'stu', 'vwx', 'yz' ]
-        self._lists['123 List'] = ['123', '456', '789', '012', '345', '678', '901', '234' ]
-        self._lists['ABC123 List'] = ['abc123', 'def456', 'ghi789', 'jkl0123', 'mno345', 'pqr678', 'stu901', 'vwx234', 'yz56']
-        self._lists['Colors'] = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple']
+        #self._lists = {}
+        #self._lists['ABC List'] = ['abc', 'def', 'ghi', 'jkl', 'mno', 'pqr', 'stu', 'vwx', 'yz' ]
+        #self._lists['123 List'] = ['123', '456', '789', '012', '345', '678', '901', '234' ]
+        #self._lists['ABC123 List'] = ['abc123', 'def456', 'ghi789', 'jkl0123', 'mno345', 'pqr678', 'stu901', 'vwx234', 'yz56']
+        #self._lists['Colors'] = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple']
 
         self._displayDays = self._calendars.displayDays
 
@@ -57,6 +58,8 @@ class CalendarScreen(MDScreen):
     def update(self):
         Window.set_system_cursor('wait')
         self._calendars.update()
+        self._lists.update()
+
         self._displayDays = self._calendars.displayDays
 
         cdl = self.ids.calendar_day_layout
@@ -71,9 +74,15 @@ class CalendarScreen(MDScreen):
 
         self.ids.calendar_month_label.text = self._calendars.month_pretty
 
-        for list in self._lists:
-            lb = ListBox(list)
-            lb.addItems(self._lists[list])
+        lists_to_show = ['Shopping', "Aaron's ToDo"]
+        for listname, list in self._lists.items():
+            if not listname in lists_to_show:
+                continue
+            lb = ListBox(listname)
+            #for item in list.items:
+            #    #lb.add_widget(MDListItem(MDListItemHeadlineText(text=item._text), MDListItemTrailingCheckbox()))
+            #    lb.addItem(item._text)
+            lb.addItems(list.items)
             cll.add_widget(lb)
             self.list_widgets[list] = lb
 
@@ -186,7 +195,7 @@ class CalendarScreen(MDScreen):
             return False
 
         start_date = datetime.strptime(instance.text, "%Y-%m-%d")
-        self._dp = MDDockedDatePicker(day=start_date.day, month=start_date.month, year=start_date.year)
+        self._dp = MDDockedDatePicker(day=start_date.day, month=start_date.month, year=start_date.year, firstweekday=6)
         self._dp.bind(on_ok=update_date, on_cancel=self._dp.dismiss)
         self._dp.open()
         
@@ -404,7 +413,7 @@ class CalendarItem(MDLabel):
             return False
 
         start_date = self._event.start_datetime.date()
-        self._dp = MDDockedDatePicker(day=start_date.day, month=start_date.month, year=start_date.year)
+        self._dp = MDDockedDatePicker(day=start_date.day, month=start_date.month, year=start_date.year, firstweekday=6)
         self._dp.bind(on_ok=self.on_date_selected, on_cancel=self._dp.dismiss)
         self._dp.open()
         
@@ -591,16 +600,46 @@ class ListBox(MDBoxLayout):
 
     def addItems(self, item_list):
         lbl = self.ids.list_box_list
-        for item in item_list:
-            #lbl.add_widget(MDLabel(text=item))
-            lbl.add_widget(MDListItem(MDListItemHeadlineText(text=item), MDListItemTrailingCheckbox()))
+        for idx, item in enumerate(item_list):
+            #lbl.add_widget(MDListItem(MDListItemHeadlineText(text=item._text), MDListItemTrailingCheckbox(id=str(idx))))
+            this_item = ListBoxItem(item, idx, self)
+            self._items.append(item)
 
-class ListBoxItem:
-    def __init__(self, name, layout):
-        self._name = name
-        self._state = False
-        self._layout = layout
+            lbl.add_widget(this_item)
 
-        self._label = MDLabel()
-        self._label.text = self._name
-        self._layout.add_widget(self._label)
+class ListBoxItem(MDListItem):
+    def __init__(self, item, idx, lb, **kwargs):
+        super().__init__(**kwargs)
+        if item.indented:
+            ind = "    "
+        else:
+            ind = ""
+        if item.checked:
+            self.ids.item_text.text = f"[s]{ind}{item.text}[/s]"
+            self.ids.item_cb.active = True
+        else:
+            self.ids.item_text.text = f"{ind}{item.text}"
+            self.ids.item_cb.active = False
+        self.ids.item_cb.id = str(idx)
+        self.ids.item_cb.bind(on_touch_down=self.check_box_toggled)
+
+        self._list_box = lb
+
+    def check_box_toggled(self, instance, touch):
+        if instance.collide_point(*touch.pos):
+            this_idx = int(instance.id)
+            this_item = self._list_box._items[this_idx]
+            this_item.checked = not this_item.checked
+
+            root_inst = self._list_box.parent.parent.parent.parent
+            root_inst._lists.push()
+            root_inst.update()
+            return True
+#    def __init__(self, name, layout):
+#        self._name = name
+#        self._state = False
+#        self._layout = layout
+#
+#        self._label = MDLabel()
+#        self._label.text = self._name
+#        self._layout.add_widget(self._label)

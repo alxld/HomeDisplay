@@ -12,7 +12,10 @@
 # Save that into keyring's google_oauth.
 
 ## TODO: Check dates coming from Todoist.  Timezone looks wrong.
+## TODO: Pop-up to select which Lists to show
+## TODO: Pop-up to select which Calendars to show
 ## TODO: Figure out why switch_to_hour isn't getting bound and called
+## TODO: Add arrows to scroll through months
 
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'multi')
