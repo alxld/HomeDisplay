@@ -621,9 +621,12 @@ class ListBoxItem(MDListItem):
             self.ids.item_text.text = f"{ind}{item.text}"
             self.ids.item_cb.active = False
         self.ids.item_cb.id = str(idx)
+
         self.ids.item_cb.bind(on_touch_down=self.check_box_toggled)
+        self.ids.item_text.bind(on_touch_down=self.edit_item)
 
         self._list_box = lb
+        self._item = item
 
     def check_box_toggled(self, instance, touch):
         if instance.collide_point(*touch.pos):
@@ -635,11 +638,33 @@ class ListBoxItem(MDListItem):
             root_inst._lists.push()
             root_inst.update()
             return True
-#    def __init__(self, name, layout):
-#        self._name = name
-#        self._state = False
-#        self._layout = layout
-#
-#        self._label = MDLabel()
-#        self._label.text = self._name
-#        self._layout.add_widget(self._label)
+        
+    def edit_item(self, instance, touch):
+        def save_item(widget):
+            dlrt = FindDialogRoot(widget)
+            self._item.text = FindChildByID(dlrt, "Title").text
+            root_inst = self._list_box.parent.parent.parent.parent
+            root_inst._lists.push()
+            root_inst.update()
+            dlrt.dismiss()
+
+        if instance.collide_point(*touch.pos):
+            MDDialog(
+                MDDialogHeadlineText(text="Edit list item"),
+                MDDialogContentContainer(
+                    MDTextField(MDTextFieldHintText(text="Title"), id='Title', mode='filled', text=self._item.text)
+                ),
+                MDDialogButtonContainer(
+                    MDButton(
+                        MDButtonText(text="Cancel"),
+                        on_release=lambda x: FindDialogRoot(x).dismiss()
+                    ),
+                    MDButton(
+                        MDButtonText(text="Save"),
+                        on_release=save_item
+                    )
+                )
+
+            ).open()
+
+            return True
