@@ -20,6 +20,7 @@ class CalendarEvent:
             self._start_format = "%-I:%M%p"
         else:
             self._start_format = "%#I:%M%p"
+        self._start_format = f"{self._start_format} on %A, %B %d, %Y"
     
 class GoogleEvent(CalendarEvent):
     def __init__(self, event, calendars, calendar_id):
@@ -174,13 +175,17 @@ class TodoistEvent(CalendarEvent):
                 new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
             elif due_time:
                 new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
-            self._calendars.todoist_api.update_task(self._item.id, due_datetime=new_due.isoformat())
+            
+            if recurrence:
+                self._calendars.todoist_api.update_task(self._item.id, due_datetime=new_due.isoformat(), due_string=recurrence)
+            else:
+                self._calendars.todoist_api.update_task(self._item.id, due_datetime=new_due.isoformat(), due_string=self._item.due.string)
         if priority and self._item.priority != priority:
             self._calendars.todoist_api.update_task(self._item.id, priority=priority)
         if description and self._item.description != description:
             self._calendars.todoist_api.update_task(self._item.id, description=description)
-        if recurrence and self._item.due.string != recurrence:
-            self._calendars.todoist_api.update_task(self._item.id, due_string=recurrence)
+        #if recurrence and self._item.due.string != recurrence:
+        #    self._calendars.todoist_api.update_task(self._item.id, due_string=recurrence)
 
     def deleteEvent(self):
         self._calendars.todoist_api.delete_task(self._item.id)
