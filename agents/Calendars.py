@@ -7,6 +7,7 @@ import sys
 import webcolors
 import platform
 import dateutil
+import pickle
 from globals import user_email, todoist_api_key
 
 class CalendarEvent:
@@ -219,19 +220,30 @@ class Calendars:
         self._enabledCalendars = ['aarondeno11@gmail.com', 'en.usa#holiday@group.v.calendar.google.com']
         self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
 
+        # Load and save todoist collaborators to save on API calls using pickle
+        try:
+            with open('todoist_collaborators.pickle', 'rb') as f:
+                self.todoist_collaborators = pickle.load(f)
+        except:
+            self.todoist_collaborators = {}
+
         # Connect to Todoist
         if Calendars.todoist_enabled:
             try:
                 self.todoist_api = TodoistAPI(todoist_api_key)
                 temp_projs = self.todoist_api.get_projects()
                 self.todoist_projects = {}
-                self.todoist_collaborators = {}
+                #self.todoist_collaborators = {}
                 for project in temp_projs:
-                    self.todoist_collaborators[project.id] = {}
                     self.todoist_projects[project.id] = project
-                    temp_collabs = self.todoist_api.get_collaborators(project.id)
-                    for clist in temp_collabs:
-                        self.todoist_collaborators[project.id][clist.id] = clist
+                    if not project.id in self.todoist_collaborators:
+                        self.todoist_collaborators[project.id] = {}
+                        temp_collabs = self.todoist_api.get_collaborators(project.id)
+                        for clist in temp_collabs:
+                            self.todoist_collaborators[project.id][clist.id] = clist
+
+                with open('todoist_collaborators.pickle', 'wb') as f:
+                    pickle.dump(self.todoist_collaborators, f)
 
                 self.todoist_colors = {}
                 for project in temp_projs:
@@ -388,10 +400,12 @@ class Calendars:
                     new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
                 elif due_time:
                     new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
-    
+
+            new_due = new_due.isoformat()
+
             resp = self.todoist_api.add_task(content=name, 
                                              due_datetime=new_due, 
-                                             priority=priority, 
+                                             #priority=priority, 
                                              description=description, 
                                              due_string=recurrence)
 

@@ -160,8 +160,8 @@ class CalendarScreen(MDScreen):
             MDDialogContentContainer(
                 MDTextField(MDTextFieldHintText(text="Name"), id="Name", mode="filled"),
                 MDTextField(MDTextFieldHintText(text="Description"), id="Description", mode="filled"),
-                MDTextField(MDTextFieldHintText(text="Date"), mode="filled", id="Date"),
-                MDTextField(MDTextFieldHintText(text="Time"), mode="filled", id="Time"),
+                MDTextField(MDTextFieldHintText(text="Date"), text=datetime.now().date().strftime("%Y-%m-%d"), id="Date", mode="filled", on_touch_down=self.show_date_picker, readonly=True, focus_behavior=False),
+                MDTextField(MDTextFieldHintText(text="Time"), text="12:00", id="Time", mode="filled", on_touch_down=self.show_time_picker, readonly=True, focus_behavior=False),
                 MDTextField(MDTextFieldHintText(text="Recurrence"), mode="filled", id="Recurrence"),
                 orientation="vertical"
             ),
@@ -176,6 +176,71 @@ class CalendarScreen(MDScreen):
                 )
             )
         ).open()
+
+    def show_date_picker(self, instance, touch):
+        def update_date(dp_instance):
+            instance.text = dp_instance.get_date()[0].strftime("%Y-%m-%d")
+            dp_instance.dismiss()
+
+        if not instance.collide_point(*touch.pos):
+            return False
+
+        start_date = datetime.strptime(instance.text, "%Y-%m-%d")
+        self._dp = MDDockedDatePicker(day=start_date.day, month=start_date.month, year=start_date.year)
+        self._dp.bind(on_ok=update_date, on_cancel=self._dp.dismiss)
+        self._dp.open()
+        
+        self._dp.pos = [Window.width/2 - self._dp.width/2, Window.height/2 - self._dp.height/2] 
+
+        return True
+
+    def show_time_picker(self, instance, touch):
+        def update_time(tp_instance):
+            instance.text = tp_instance.time.strftime("%H:%M")
+            tp_instance.dismiss()
+
+        def switch_to_minutes(tp_instance, touch):
+            tp = tp_instance.parent.parent.parent.parent
+            if tp.is_open:
+                tp._selector.mode = "minute"
+
+            return True
+    
+        def switch_to_hours(tp_instance, touch):
+            tp = tp_instance.parent.parent.parent.parent
+            if tp.is_open:
+                tp._selector.mode = "hour"
+
+            return True
+
+        if not instance.collide_point(*touch.pos):
+            return False
+
+        start_time = datetime.strptime(instance.text, "%H:%M").time()
+        self._tp = MDTimePickerDialHorizontal()
+        self._tp.ids._time_input.ids.minute.bind(on_touch_down=switch_to_minutes)
+        self._tp.ids._time_input.ids.hour.bind(on_touch_down=switch_to_hours)
+        self._tp.set_time(start_time)
+        #if start_time.hour == 0:
+        #    self._tp.set_time(time(12, start_time.minute))
+        #else:
+        #    self._tp.set_time(start_time)
+        #if start_time.hour < 12:
+        #    self._tp.am_pm = "am"
+        #    self._tp.ids._am_pm_selector.mode = "am"
+        #else:
+        #    self._tp.am_pm = "pm"
+        #    self._tp.ids._am_pm_selector.mode = "pm"
+
+        self._tp.bind(on_ok=update_time, on_cancel=self._tp.dismiss)
+        #self._tp.bind(on_selector_hour=self._on_selector_hours)
+        self._tp.open()
+
+        self._tp.pos = [Window.width/2 - self._tp.width/2, Window.height/2 - self._tp.height/2]
+
+        self._tp._selector.mode = "hour"
+        
+        return True
 
     def _save_new_event(self, instance):
         dlrt = FindDialogRoot(instance)

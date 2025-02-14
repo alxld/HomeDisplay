@@ -11,6 +11,9 @@
 # the debugger (not sure why it won't print right) and grab the value of master_response['Token'].
 # Save that into keyring's google_oauth.
 
+## TODO: Check dates coming from Todoist.  Timezone looks wrong.
+## TODO: Figure out why switch_to_hour isn't getting bound and called
+
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'multi')
 Config.set('kivy', 'exit_on_escape', 0)
