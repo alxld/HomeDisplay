@@ -78,7 +78,7 @@ class CalendarScreen(MDScreen):
         for listname, list in self._lists.items():
             if not listname in lists_to_show:
                 continue
-            lb = ListBox(listname)
+            lb = ListBox(listname, list)
             #for item in list.items:
             #    #lb.add_widget(MDListItem(MDListItemHeadlineText(text=item._text), MDListItemTrailingCheckbox()))
             #    lb.addItem(item._text)
@@ -591,9 +591,10 @@ class Bullet(MDWidget):
     pass
 
 class ListBox(MDBoxLayout):
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, listobj, **kwargs):
         super().__init__(**kwargs)
         self._name = name
+        self._listobj = listobj
         self.ids.list_box_name_label.text = name
 
         self._items = []
@@ -607,11 +608,43 @@ class ListBox(MDBoxLayout):
 
             lbl.add_widget(this_item)
 
+    def add_list_item(self):
+        def do_add_item(instance):
+            dlrt = FindDialogRoot(instance)
+            new_item_name = FindChildByID(dlrt, "Title").text
+            self._listobj.add(new_item_name)
+
+            root_inst = self.parent.parent.parent.parent
+            root_inst._lists.push()
+            root_inst.update()
+
+            dlrt.dismiss()
+
+        MDDialog(
+            MDDialogHeadlineText(text=f"Add list item to {self._name}"),
+            MDDialogContentContainer(
+                MDTextField(MDTextFieldHintText(text="Title"), id="Title", mode='filled')
+            ),
+            MDDialogButtonContainer(
+                MDButton(
+                    MDButtonText(text="Cancel"),
+                    on_release=lambda x: FindDialogRoot(x).dismiss()
+                ),
+                MDButton(
+                    MDButtonText(text="Save"),
+                    on_release=do_add_item
+                )
+            )
+        ).open()
+
+    def clear_list(self):
+        pass
+
 class ListBoxItem(MDListItem):
     def __init__(self, item, idx, lb, **kwargs):
         super().__init__(**kwargs)
         if item.indented:
-            ind = "    "
+            ind = " -- "
         else:
             ind = ""
         if item.checked:
@@ -648,6 +681,13 @@ class ListBoxItem(MDListItem):
             root_inst.update()
             dlrt.dismiss()
 
+        def delete_item(widget):
+            dlrt = FindDialogRoot(widget)
+            self._item.delete()
+            root_inst = self._list_box.parent.parent.parent.parent
+            root_inst.update()
+            dlrt.dismiss()
+
         if instance.collide_point(*touch.pos):
             MDDialog(
                 MDDialogHeadlineText(text="Edit list item"),
@@ -658,6 +698,10 @@ class ListBoxItem(MDListItem):
                     MDButton(
                         MDButtonText(text="Cancel"),
                         on_release=lambda x: FindDialogRoot(x).dismiss()
+                    ),
+                    MDButton(
+                        MDButtonText(text="Delete"),
+                        on_release=delete_item
                     ),
                     MDButton(
                         MDButtonText(text="Save"),

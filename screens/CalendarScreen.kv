@@ -213,12 +213,22 @@
                 pos_hint: {'left_x': 0.0, 'center_y': 0.5}
                 size_hint_x: 0.7
             MDButton:
+                style: 'elevated'
+                pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                id: list_box_add_botton
+                on_release: root.add_list_item()
+                MDButtonIcon:
+                    icon: "plus"
+                MDButtonText:
+            MDButton:
                 #size_hint_x: 0.2
                 #size_hint_y: 0.2
                 style: 'elevated'
                 pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                id: list_box_delete_botton
+                on_release: root.clear_list()
                 MDButtonIcon:
-                    icon: "refresh"
+                    icon: "delete"
                 MDButtonText:
         MDScrollView:
             do_scroll_x: False
