@@ -29,6 +29,7 @@ class Lists:
         #    sys.exit(-1)
 
         try:
+            self.keep.sync()
             self.keep_all = self.keep.all()
 
             # Get all lists into a dictionary
