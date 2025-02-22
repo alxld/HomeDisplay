@@ -16,6 +16,7 @@ from kivy.graphics import Color, RoundedRectangle
 from kivy.core.window import Window
 from kivy.config import Config
 from kivy.metrics import dp
+from kivy.uix.behaviors import DragBehavior
 
 from agents.Calendars import Calendars
 from agents.Lists import Lists
@@ -28,8 +29,8 @@ class CalendarScreen(MDScreen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self._calendars = Calendars()
-        self._lists = Lists()
+        self._calendars = Calendars(self)
+        self._lists = Lists(self)
 
         self.day_widgets = []
 
@@ -55,8 +56,26 @@ class CalendarScreen(MDScreen):
     def update_callback(self, dt):
         self.update()
 
+    def open_waiting_dialog(self, message):
+        self._wait_dialog = MDDialog(
+            MDDialogHeadlineText(text="One moment..."),
+            MDDialogContentContainer(
+                MDLabel(text=message)
+            )
+        )
+        Clock.schedule_once(lambda x: self._wait_dialog.open())
+        #self._wait_dialog.open()
+
+    def close_waiting_dialog(self):
+        self._wait_dialog.dismiss()
+
     def update(self):
+        self.open_waiting_dialog("Refreshing")
         Window.set_system_cursor('wait')
+
+        Clock.schedule_once(lambda x: self.do_other_stuff(), 0.3)
+
+    def do_other_stuff(self):
         self._calendars.update()
         self._lists.update()
 
@@ -162,6 +181,7 @@ class CalendarScreen(MDScreen):
             cdl.add_widget(cd)
             self.day_widgets.append(cd)
         Window.set_system_cursor('arrow')
+        self.close_waiting_dialog()
 
     def add_event(self):
         MDDialog(
@@ -640,7 +660,7 @@ class ListBox(MDBoxLayout):
     def clear_list(self):
         pass
 
-class ListBoxItem(MDListItem):
+class ListBoxItem(DragBehavior, MDListItem):
     def __init__(self, item, idx, lb, **kwargs):
         super().__init__(**kwargs)
         if item.indented:
@@ -712,3 +732,14 @@ class ListBoxItem(MDListItem):
             ).open()
 
             return True
+        
+    def on_touch_up(self, touch):
+        if self._get_uid('svavoid') in touch.ud:
+            return super(DragBehavior, self).on_touch_up(touch)
+
+        grabbed = touch.grab_list[0]()
+
+        if self.collide_point(*touch.pos):
+            if self._item == grabbed._item:
+                return
+            print()

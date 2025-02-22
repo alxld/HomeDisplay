@@ -8,6 +8,7 @@ import webcolors
 import platform
 import dateutil
 import pickle
+import time
 from globals import user_email, todoist_api_key
 
 class CalendarEvent:
@@ -220,10 +221,11 @@ class Calendars:
     google_enabled = False
     todoist_enabled = True
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
-    def __init__(self):
+    def __init__(self, screen_obj):
         self._displayDates = []
         self._enabledCalendars = ['aarondeno11@gmail.com', 'en.usa#holiday@group.v.calendar.google.com']
         self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
+        self._screen_obj = screen_obj
 
         # Load and save todoist collaborators to save on API calls using pickle
         try:
@@ -276,11 +278,19 @@ class Calendars:
 
     def update(self):
         if Calendars.todoist_enabled:
-            try:
-                self.todoist_tasks = self.todoist_api.get_tasks()
-            except Exception as error:
-                print(f"Error loading tasks from Todoist:\n   {error}")
-                sys.exit(-1)
+            print("Loading todoist tasks...")
+            done = False
+            while not done:
+                try:
+                    self.todoist_tasks = self.todoist_api.get_tasks()
+                except Exception as error:
+                    print(f"Error loading tasks from Todoist:\n   {error}")
+                    print(f"Trying again in 10 seconds...")
+                    time.sleep(10)
+                    #sys.exit(-1)
+                
+                done = True
+            print("Done")
 
         self._displayDates = []
 
@@ -321,28 +331,42 @@ class Calendars:
             #for project_id, project in self.todoist_projects.items():
             #    if project.name in self._enabledProjects:
             #        self.todoist_colors[project.id] = project.color
-    
-            try:
-                for calendar_id in self._enabledCalendars:
-                    these_events = self.gcal.get_events(self._displayDates[0], self._displayDates[-1], single_events=True, calendar_id = calendar_id)
-                    self.google_events[calendar_id] = list(these_events)
-            except Exception as error:
-                print(f"Error loading Google Calendar:\n   {error}")
-                sys.exit(-1)
+
+            done = False
+            while not done: 
+                try:
+                    for calendar_id in self._enabledCalendars:
+                        these_events = self.gcal.get_events(self._displayDates[0], self._displayDates[-1], single_events=True, calendar_id = calendar_id)
+                        self.google_events[calendar_id] = list(these_events)
+                except Exception as error:
+                    print(f"Error loading Google Calendar:\n   {error}")
+                    printf("Trying again in 10 seconds...")
+                    time.sleep(10)
+                    #sys.exit(-1)
+
+                done = True
 
         self.todoist_events = {}
         if Calendars.todoist_enabled:
-            try:
-                for project_id in [ p for p in self.todoist_projects if self.todoist_projects[p].name in self._enabledProjects ]:
-                    project = self.todoist_projects[project_id]
-                    these_events = [ t for t in self.todoist_tasks if t.project_id == project_id ]
-                    these_events = [ ev for ev in these_events if hasattr(ev.due, 'date') ]
-                    these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) >= self._displayDates[0] ]
-                    these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) <= self._displayDates[-1] ]
-                    self.todoist_events[project_id] = these_events
-            except Exception as error:
-                print(f"Error loading Todoist Calendar:\n   {error}")
-                sys.exit(-1)
+            print("Loading todoist details")
+            done = False
+            while not done:
+                try:
+                    for project_id in [ p for p in self.todoist_projects if self.todoist_projects[p].name in self._enabledProjects ]:
+                        project = self.todoist_projects[project_id]
+                        these_events = [ t for t in self.todoist_tasks if t.project_id == project_id ]
+                        these_events = [ ev for ev in these_events if hasattr(ev.due, 'date') ]
+                        these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) >= self._displayDates[0] ]
+                        these_events = [ ev for ev in these_events if date.fromisoformat(ev.due.date) <= self._displayDates[-1] ]
+                        self.todoist_events[project_id] = these_events
+                except Exception as error:
+                    print(f"Error loading Todoist Calendar:\n   {error}")
+                    print("Trying again in 10 seconds...")
+                    time.sleep(10)
+                    #sys.exit(-1)
+
+                done = True
+            print("Done")
 
         #print()
         #self.todoist_api.sync()

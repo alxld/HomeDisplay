@@ -237,8 +237,11 @@
             MDList:
                 id: list_box_list
 
-<ListBoxItem@MDListItem>:
+<ListBoxItem>:
     height: dp(32)
+    drag_rectangle: self.x, self.y, dp(60), self.height
+    MDListItemLeadingIcon:
+        icon: "drag-vertical"
     MDListItemHeadlineText:
         text: "Empty"
         id: item_text
