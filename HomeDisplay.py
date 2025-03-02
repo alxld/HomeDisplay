@@ -26,6 +26,7 @@ from kivymd.app import MDApp
 from kivymd.uix.navigationbar import MDNavigationBar, MDNavigationItem
 import sys
 from screens.CalendarScreen import CalendarScreen
+from screens.WorkoutScreen import WorkoutScreen
 from screens.CookingScreen import CookingScreen
 from screens.HomeScreen import HomeScreen
 from screens.PrintScreen import PrintScreen
@@ -39,34 +40,21 @@ class HomeDisplayApp(MDApp):
     def build(self):
         Window.size=(1920, 1080)
         Window.fullscreen = fullscreen
-    #    cdl = self.root.ids.calendar_day_layout
-    #    print(cdl)
-    #    pass
 
     def on_switch_tabs(self, bar: MDNavigationBar, item: MDNavigationItem, item_icon: str, item_text: str):
-        if item_text == "Calendar":
-            self.root.ids.main_screen_manager.transition.direction = 'right'
-            self.root.ids.main_screen_manager.current = "CalendarScreen"
-        elif item_text == "Cooking":
-            if self.root.ids.main_screen_manager.current == 'CalendarScreen':
-                self.root.ids.main_screen_manager.transition.direction = 'left'
-            else:
-                self.root.ids.main_screen_manager.transition.direction = 'right'
-            self.root.ids.main_screen_manager.current = "CookingScreen"
-        elif item_text == "3D Print":
-            if self.root.ids.main_screen_manager.current == 'CalendarScreen' or self.root.ids.main_screen_manager.current == 'CookingScreen':
-                self.root.ids.main_screen_manager.transition.direction = 'left'
-            else:
-                self.root.ids.main_screen_manager.transition.direction = 'right'
-            self.root.ids.main_screen_manager.current = "PrintScreen"
-        elif item_text == "Home":
+        new_screen_name = item_text.replace('3D ', '') + "Screen"
+
+        new_idx = self.root.ids.main_screen_manager.screen_names.index(new_screen_name)
+        curr_idx = self.root.ids.main_screen_manager.screen_names.index(self.root.ids.main_screen_manager.current)
+
+        if new_idx > curr_idx:
             self.root.ids.main_screen_manager.transition.direction = 'left'
-            self.root.ids.main_screen_manager.current = "HomeScreen"
+        else:
+            self.root.ids.main_screen_manager.transition.direction = 'right'
+        
+        self.root.ids.main_screen_manager.current = new_screen_name
 
 if __name__ == "__main__":
     mainapp = HomeDisplayApp()
     mainapp.run()
     sys.exit(0)
-
-    #lists.update()
-    #calendars.update()

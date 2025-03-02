@@ -1,4 +1,5 @@
 #: include screens/CalendarScreen.kv
+#: include screens/WorkoutScreen.kv
 #: include screens/CookingScreen.kv
 #: include screens/PrintScreen.kv
 #: include screens/HomeScreen.kv
@@ -11,6 +12,7 @@ MDGridLayout:
         id: main_screen_manager
         md_bg_color: 'lightgrey'
         CalendarScreen:
+        WorkoutScreen:
         CookingScreen:
         PrintScreen:
         HomeScreen:
@@ -22,6 +24,11 @@ MDGridLayout:
                 icon: "calendar-month"
             MDNavigationItemLabel: 
                 text: "Calendar"
+        MDNavigationItem:
+            MDNavigationItemIcon:
+                icon: "dumbbell"
+            MDNavigationItemLabel: 
+                text: "Workout"
         MDNavigationItem:
             MDNavigationItemIcon: 
                 icon: "grill"
