@@ -1,0 +1,72 @@
+CREATE DATABASE IF NOT EXISTS workout_tracker;
+USE workout_tracker;
+
+-- Users table
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Body parts table
+CREATE TABLE body_parts (
+    body_part_id INT AUTO_INCREMENT PRIMARY KEY,
+    body_part_name VARCHAR(255) UNIQUE NOT NULL
+);
+
+-- Exercises table
+CREATE TABLE exercises (
+    exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    exercise_name VARCHAR(255) NOT NULL,
+    description TEXT
+);
+
+-- Exercise Body Parts linking table
+CREATE TABLE exercise_body_parts (
+    exercise_body_part_id INT AUTO_INCREMENT PRIMARY KEY,
+    exercise_id INT,
+    body_part_id INT,
+    FOREIGN KEY (exercise_id) REFERENCES exercises(exercise_id),
+    FOREIGN KEY (body_part_id) REFERENCES body_parts(body_part_id)
+);
+
+-- Workouts table
+CREATE TABLE workouts (
+    workout_id INT AUTO_INCREMENT PRIMARY KEY,
+    workout_date DATE NOT NULL,
+    workout_notes TEXT, -- General workout notes
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Workout Users linking table
+CREATE TABLE workout_users (
+    workout_user_id INT AUTO_INCREMENT PRIMARY KEY,
+    workout_id INT,
+    user_id INT,
+    user_workout_comments TEXT, -- Individual user comments for this workout
+    FOREIGN KEY (workout_id) REFERENCES workouts(workout_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- Workout exercises (linking workouts to exercises)
+CREATE TABLE workout_exercises (
+    workout_exercise_id INT AUTO_INCREMENT PRIMARY KEY,
+    workout_id INT,
+    exercise_id INT,
+    exercise_order INT, -- Order exercises are performed
+    FOREIGN KEY (workout_id) REFERENCES workouts(workout_id),
+    FOREIGN KEY (exercise_id) REFERENCES exercises(exercise_id)
+);
+
+-- Sets table (tracking sets for each exercise in a workout)
+CREATE TABLE sets (
+    set_id INT AUTO_INCREMENT PRIMARY KEY,
+    workout_exercise_id INT,
+    set_number INT NOT NULL,
+    reps INT,
+    weight DECIMAL(10, 2),
+    comments TEXT,
+    FOREIGN KEY (workout_exercise_id) REFERENCES workout_exercises(workout_exercise_id)
+);
