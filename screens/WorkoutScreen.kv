@@ -1,5 +1,264 @@
+<ExerciseSet@MDBoxLayout>:
+    orientation: 'horizontal'
+    height: dp(23)
+    size_hint_y: None
+
+    MDLabel:
+        size_hint_x: 0.15
+        id: set_number
+        text: '1'
+
+    MDLabel: 
+        size_hint_x: 0.35
+        id: set_weight
+        text: '100'
+
+    MDLabel:
+        size_hint_x: 0.35
+        id: set_reps
+        text: '3'
+
+    MDIconButton:
+        size_hint_x: 0.15
+        icon: 'comment'
+
+
+<ExerciseRow@MDCard>:
+    style: 'outlined'
+    size_hint_y: None
+    height: dp(168)
+
+    MDBoxLayout:
+        orientation: 'horizontal'
+
+        MDBoxLayout: # Exercise details
+            orientation: 'vertical'
+            size_hint_x: 0.25
+            #padding: [0,3,0,0]
+            #spacing: dp(5)
+        
+            MDLabel:
+                text: root.exercise_name
+                size_hint_y: 0.5
+                font_style: 'Display'
+                role: 'small'
+
+            # Make a grid of 'History' and 'Add Set' buttons for each of Aaron and Weez
+            MDBoxLayout:
+                orientation: 'horizontal'
+        
+                MDBoxLayout: # Empty space on left
+                    size_hint_x: 0.25
+                MDBoxLayout: # Row names
+                    orientation: 'vertical'
+                    size_hint_x: 0.375
+                    size_hint_y: 1.0
+                    MDLabel:
+                        size_hint_y: 0.33
+                    MDLabel:
+                        size_hint_y: 0.33
+                        text: 'Add Set'
+                    MDLabel:
+                        size_hint_y: 0.33
+                        text: 'History'
+                MDBoxLayout: # Aaron's Buttons
+                    orientation: 'vertical'
+                    size_hint_x: 0.33/2
+                    size_hint_y: 1.0
+                    MDLabel:
+                        size_hint_y: 0.33
+                        text: 'Aaron'
+                    MDIconButton:
+                        icon: 'plus'
+                        size_hint_y: 0.33
+                        on_release: root.add_set('Aaron')
+                    MDIconButton:
+                        icon: 'history'
+                        size_hint_y: 0.33
+                        on_release: root.show_history('Aaron')
+                MDBoxLayout: # Weez's Buttons
+                    orientation: 'vertical'
+                    size_hint_x: 0.375
+                    size_hint_y: 1.0
+                    MDLabel:
+                        size_hint_y: 0.33
+                        text: 'Weez'
+                    MDIconButton:
+                        icon: 'plus'
+                        size_hint_y: 0.33
+                        on_release: root.add_set('Weez')
+                    MDIconButton:
+                        icon: 'history'
+                        size_hint_y: 0.33
+                        on_release: root.show_history('Weez')
+
+        MDCard: # Aaron's sets
+            style: 'outlined'
+            size_hint_x: 0.375
+
+            MDStackLayout:
+                orientation: 'tb-lr'
+                padding: [15, 15, 15, 15]
+                id: set_stack_aaron
+
+                # Write out the headers (set#, weight, reps)
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: dp(20)
+
+                    MDLabel:
+                        size_hint_x: 0.15
+                        text: '#'
+                        font_style: 'Headline'
+                        role: 'small'
+                    MDLabel:
+                        size_hint_x: 0.35
+                        text: 'Weight'
+                        font_style: 'Headline'
+                        role: 'small'
+                    MDLabel:
+                        size_hint_x: 0.35
+                        text: 'Reps'
+                        font_style: 'Headline'
+                        role: 'small'
+                    MDLabel:
+                        size_hint_x: 0.15
+
+        MDCard: # Weez's sets
+            style: 'outlined'
+            size_hint_x: 0.375
+
+            MDStackLayout:
+                orientation: 'tb-lr'
+                padding: [15, 15, 15, 15]
+                id: set_stack_weez
+
+                # Write out the headers (set#, weight, reps)
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: dp(20)
+
+                    MDLabel:
+                        size_hint_x: 0.15
+                        text: '#'
+                        font_style: 'Headline'
+                        role: 'small'
+                    MDLabel:
+                        size_hint_x: 0.35
+                        text: 'Weight'
+                        font_style: 'Headline'
+                        role: 'small'
+                    MDLabel:
+                        size_hint_x: 0.35
+                        text: 'Reps'
+                        font_style: 'Headline'
+                        role: 'small'
+                    MDLabel:
+                        size_hint_x: 0.15
+
 <WorkoutScreen>
     name: 'WorkoutScreen'
-    MDLabel:
-        text: 'This is the workout screen'
-        halign: 'center'
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        MDStackLayout: # This is the main layout for the screen
+            orientation: 'tb-lr'
+            id: main_layout
+            size_hint_y: 0.9
+
+            MDBoxLayout: # Pre-add the names at the top of the screen
+                orientation: 'horizontal'
+                height: dp(60)
+                size_hint_y: None
+    
+                MDLabel: # Empty
+                    size_hint_x: 0.25
+                    size_hint_y: None
+                    height: dp(15)
+
+                MDBoxLayout: # Aaron's name
+                    size_hint_x: 0.375
+                    MDLabel:
+                        size_hint_y: None
+                        height: dp(15)
+                        text: 'Aaron'
+                        size_hint_x: 0.7
+                        font_style: 'Display'
+                        role: 'large'
+                        halign: 'center'
+    
+                    MDIconButton:
+                        size_hint_y: None
+                        height: dp(15)
+                        icon: 'comment'
+                        on_release: root.user_comment('Aaron')
+                        size_hint_x: 0.3
+    
+                MDBoxLayout: # Weez's name
+                    size_hint_x: 0.375
+                    size_hint_y: None
+                    height: dp(15)
+                    MDLabel:
+                        size_hint_y: None
+                        height: dp(15)
+                        text: 'Weez'
+                        size_hint_x: 0.7
+                        font_style: 'Display'
+                        role: 'large'
+                        halign: 'center'
+    
+                    MDIconButton:
+                        icon: 'comment'
+                        on_release: root.user_comment('Weez')
+                        size_hint_x: 0.3
+                        size_hint_y: None
+                        height: dp(15)
+
+        MDBoxLayout: # Bottom part of the window with date/time/timer
+            orientation: 'horizontal'
+            size_hint_y: 0.1
+            size_hint_x: 1.0
+            padding: [0,3,0,0]
+
+            MDCard:
+                orientation: 'horizontal'
+                style: 'outlined'
+                size_hint_x: 0.5
+                padding: [0,3,0,0]
+
+                MDLabel:
+                    text: 'Date goes here'
+                    size_hint_x: 0.5
+                    padding: [0,3,0,0]
+
+            MDCard:
+                orientation: 'horizontal'
+                size_hint_x: 0.5
+                padding: [0,3,0,0]
+                style: 'outlined'
+
+                MDBoxLayout: # Timer section
+                    orientation: 'horizontal'
+                    size_hint_x: 0.5
+                    padding: [0,3,0,0]
+
+                    MDLabel:
+                        text: '00:00'
+
+                    MDIconButton:
+                        icon: 'play'
+                        on_release: root.start_timer()
+
+                    MDIconButton:
+                        icon: 'pause'
+                        on_release: root.pause_timer()
+
+                    MDIconButton:
+                        icon: 'stop'
+                        on_release: root.stop_timer()
+
+                    MDIconButton:
+                        icon: 'refresh'
+                        on_release: root.reset_timer()
