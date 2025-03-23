@@ -1,10 +1,15 @@
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.card import MDCard
+from agents.WorkoutDB import WorkoutDB
+from kivymd.uix.dialog import MDDialog, MDDialogHeadlineText, MDDialogContentContainer, MDDialogButtonContainer, MDDialogSupportingText
 
 class WorkoutScreen(MDScreen):
     def __init__(self, **kwargs):
         super(WorkoutScreen, self).__init__(**kwargs)
+        self.workout_db = WorkoutDB()
+
+        print()
 
     def on_kv_post(self, base_widget):
         self.add_exercise('Bench Press')
@@ -23,6 +28,14 @@ class WorkoutScreen(MDScreen):
         testing.add_set("Aaron")
         testing.add_set("Aaron")
         testing.add_set("Weez")
+
+    # Handle menu button being pressed
+    def menu_button(self):
+        print("Menu button pressed")
+        #self.menu_dialog = MDDialog(
+        #    MDDialogHeadlineText(title="Workout Menu"),
+        #    MDDialogContentContainer(
+        #        MD
 
 class ExerciseRow(MDCard):
     def __init__(self, name, **kwargs):

@@ -224,7 +224,8 @@ class Calendars:
     def __init__(self, screen_obj):
         self._displayDates = []
         self._enabledCalendars = ['aarondeno11@gmail.com', 'en.usa#holiday@group.v.calendar.google.com']
-        self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
+        #self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
+        self._enabledProjects = ['Appointments (Outlook)', 'Maintenance', 'Birthdays']
         self._screen_obj = screen_obj
 
         # Load and save todoist collaborators to save on API calls using pickle

@@ -30,3 +30,8 @@ mqtt_name = f"{mqtt_base}/{mqtt_mid}/{mqtt_suffix}"
 mosquitto_ip = "192.168.1.7"
 mosquitto_username = "hass"
 mosquitto_password = keyring.get_password("mosquitto", "hass")
+
+# Workout MySQL
+workout_host = "192.168.1.7"
+workout_user = "adeno"
+workout_password = keyring.get_password("mysql", "adeno")

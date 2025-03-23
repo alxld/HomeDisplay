@@ -163,6 +163,7 @@
 
     MDBoxLayout:
         orientation: 'vertical'
+
         MDStackLayout: # This is the main layout for the screen
             orientation: 'tb-lr'
             id: main_layout
@@ -172,11 +173,11 @@
                 orientation: 'horizontal'
                 height: dp(60)
                 size_hint_y: None
-    
-                MDLabel: # Empty
-                    size_hint_x: 0.25
-                    size_hint_y: None
-                    height: dp(15)
+
+                MDIconButton:
+                    icon: 'menu'
+                    on_release: root.menu_button()
+                    pos_hint: {'center_y': 0.5}
 
                 MDBoxLayout: # Aaron's name
                     size_hint_x: 0.375
