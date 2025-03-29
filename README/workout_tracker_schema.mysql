@@ -20,7 +20,8 @@ CREATE TABLE body_parts (
 CREATE TABLE exercises (
     exercise_id INT AUTO_INCREMENT PRIMARY KEY,
     exercise_name VARCHAR(255) NOT NULL,
-    description TEXT
+    description TEXT,
+    comments TEXT
 );
 
 -- Exercise Body Parts linking table
@@ -56,6 +57,7 @@ CREATE TABLE workout_exercises (
     workout_id INT,
     exercise_id INT,
     exercise_order INT, -- Order exercises are performed
+    comments TEXT, -- Comments for this exercise in this workout
     FOREIGN KEY (workout_id) REFERENCES workouts(workout_id),
     FOREIGN KEY (exercise_id) REFERENCES exercises(exercise_id)
 );

@@ -9,7 +9,11 @@ import platform
 import dateutil
 import pickle
 import time
+import signal
 from globals import user_email, todoist_api_key
+
+class TimeoutException(Exception):
+    pass
 
 class CalendarEvent:
     def __init__(self, item, calendars, calendar_id):
@@ -277,13 +281,19 @@ class Calendars:
 
         self.update()
 
+    def timeout_handler(self, signum, frame):
+        raise TimeoutException("Timeout occurred")
+
     def update(self):
         if Calendars.todoist_enabled:
             print("Loading todoist tasks...")
             done = False
             while not done:
                 try:
+                    signal.signal(signal.SIGALRM, self.timeout_handler)
+                    signal.alarm(15)  # Set a timeout of 15 seconds
                     self.todoist_tasks = self.todoist_api.get_tasks()
+                    signal.alarm(0)  # Cancel the timeout
                 except Exception as error:
                     print(f"Error loading tasks from Todoist:\n   {error}")
                     print(f"Trying again in 10 seconds...")
