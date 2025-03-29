@@ -9,11 +9,39 @@ import platform
 import dateutil
 import pickle
 import time
-import signal
+import threading
 from globals import user_email, todoist_api_key
 
 class TimeoutException(Exception):
     pass
+
+def run_with_timeout(func, args, timeout):
+    results = None
+    timeout_occurred = False
+
+    def wrapper():
+        nonlocal results
+        try:
+            results = func(*args)
+        except Exception as e:
+            results = e
+
+    def set_timeout():
+        nonlocal timeout_occurred
+        timeout_occurred = True
+
+    timer = threading.Timer(timeout, set_timeout)
+    timer.start()
+
+    thread = threading.Thread(target=wrapper)
+    thread.start()
+    thread.join()
+    timer.cancel()
+
+    if timeout_occurred:
+        raise TimeoutException("Timeout occurred")
+
+    return results
 
 class CalendarEvent:
     def __init__(self, item, calendars, calendar_id):
@@ -281,24 +309,21 @@ class Calendars:
 
         self.update()
 
-    def timeout_handler(self, signum, frame):
-        raise TimeoutException("Timeout occurred")
-
     def update(self):
+        def todoist_task_helper():
+            self.todoist_tasks = self.todoist_api.get_tasks()
+
         if Calendars.todoist_enabled:
             print("Loading todoist tasks...")
             done = False
             while not done:
                 try:
-                    signal.signal(signal.SIGALRM, self.timeout_handler)
-                    signal.alarm(15)  # Set a timeout of 15 seconds
-                    self.todoist_tasks = self.todoist_api.get_tasks()
-                    signal.alarm(0)  # Cancel the timeout
+                    run_with_timeout(todoist_task_helper, [], 10)
+                    #self.todoist_tasks = self.todoist_api.get_tasks()
                 except Exception as error:
                     print(f"Error loading tasks from Todoist:\n   {error}")
-                    print(f"Trying again in 10 seconds...")
-                    time.sleep(10)
-                    #sys.exit(-1)
+                    #print(f"Trying again in 10 seconds...")
+                    #time.sleep(10)
                 
                 done = True
             print("Done")
@@ -351,9 +376,8 @@ class Calendars:
                         self.google_events[calendar_id] = list(these_events)
                 except Exception as error:
                     print(f"Error loading Google Calendar:\n   {error}")
-                    printf("Trying again in 10 seconds...")
+                    print("Trying again in 10 seconds...")
                     time.sleep(10)
-                    #sys.exit(-1)
 
                 done = True
 
