@@ -166,6 +166,11 @@ class HomeAssistantEvent(CalendarEvent):
     def visibility(self):
         return "UNKNOWN"
     
+    @property
+    def location(self):
+        if 'location' in self._item:
+            return self._item['location']
+    
 class GoogleEvent(CalendarEvent):
     def __init__(self, event, calendars, calendar_id):
         super().__init__(event, calendars, calendar_id)

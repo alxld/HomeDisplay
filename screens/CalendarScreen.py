@@ -520,6 +520,7 @@ class CalendarItem(MDLabel):
             reminder = self._event.reminders
             start_time = self._event.start_datetime
             descr = self._event.description
+            location = self._event.location
 
             if self._event.is_recurring:
                 recurr_text = f"{True} ({self._event.recurrence})"
@@ -598,6 +599,9 @@ class CalendarItem(MDLabel):
                     ),
                     MDListItem(
                         MDListItemSupportingText(text=f"Recurring: {recurr_text}")
+                    ),
+                    MDListItem(
+                        MDListItemSupportingText(text=f"Location: {location}")
                     ),
                     MDDivider(),
                     MDListItem(
