@@ -154,7 +154,7 @@ class HomeAssistantEvent(CalendarEvent):
     @property
     def recurrence(self):
         if self.is_recurring:
-            return self._item['recurrence_id']
+            return self._item['rrule']
         else:
             return None
         
