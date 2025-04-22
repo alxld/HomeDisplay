@@ -1,6 +1,8 @@
+import dateutil.relativedelta
 from todoist_api_python.api import TodoistAPI, Task
 from gcsa.google_calendar import GoogleCalendar
 from gcsa.event import Event
+from gcsa.recurrence import Recurrence
 from datetime import datetime, timedelta, date, timezone
 import keyring
 import sys
@@ -10,7 +12,9 @@ import dateutil
 import pickle
 import time
 import threading
-from globals import user_email, todoist_api_key
+import requests
+import json
+from globals import user_email, todoist_api_key, HA_CALENDAR_URL, HA_HEADER, HA_CALENDAR_COLORS
 
 class TimeoutException(Exception):
     pass
@@ -54,6 +58,83 @@ class CalendarEvent:
         else:
             self._start_format = "%#I:%M%p"
         self._start_format = f"{self._start_format} on %A, %B %d, %Y"
+
+    @property
+    def isGoogleEvent(self):
+        return False
+    
+    @property
+    def isTodoistEvent(self):
+        return False
+    
+    @property
+    def isHomeAssistantEvent(self):
+        return False
+
+class HomeAssistantEvent(CalendarEvent):
+    def __init__(self, event, calendars, calendar_id):
+        super().__init__(event, calendars, calendar_id)
+
+    @property
+    def isHomeAssistantEvent(self):
+        return True
+    
+    @property
+    def name(self):
+        return self._item['summary']
+    
+    @property
+    def colors(self):
+        if self._calendar_id in HA_CALENDAR_COLORS:
+            return HA_CALENDAR_COLORS[self._calendar_id], [0, 0, 0]
+        else:
+            return '#FF0000', [0, 0, 0]
+        
+    @property
+    def end(self):
+        return self._item['end']
+
+    @property
+    def start_pretty(self):
+        return self._item['start'].strftime(self._start_format)
+    
+    @property
+    def start_date(self):
+        # Convert date to datetime object
+        if 'dateTime' in self._item['start']:
+            return dateutil.parser.parse(self._item['start']['dateTime']).date()
+        elif 'date' in self._item['start']:
+            # Parse date value in dictionary and convert to date
+            return dateutil.parser.parse(self._item['start']['date']).date()
+    
+    @property
+    def start_datetime(self):
+        if type(self._item['start']) == datetime:
+            return self._item['start']
+        else:
+            # Parse date value in dictionary and convert to datetime
+            return dateutil.parser.parse(self._item['start']['date'])
+        
+    @property
+    def end_date(self):
+        # Convert date to datetime object
+        if 'dateTime' in self._item['end']:
+            return dateutil.parser.parse(self._item['end']['dateTime']).date()
+        elif 'date' in self._item['end']:
+            # Parse date value in dictionary and convert to date
+            return dateutil.parser.parse(self._item['end']['date']).date()
+        
+    @property
+    def end_datetime(self):
+        if type(self._item['end']) == datetime:
+            return self._item['end']
+        else:
+            # Parse date value in dictionary and convert to datetime
+            return dateutil.parser.parse(self._item['end']['date'])
+        
+    @property
+    def calendar_id(self):
+        return self._calendar_id
     
 class GoogleEvent(CalendarEvent):
     def __init__(self, event, calendars, calendar_id):
@@ -62,10 +143,6 @@ class GoogleEvent(CalendarEvent):
     @property
     def isGoogleEvent(self):
         return True
-    
-    @property
-    def isTodoistEvent(self):
-        return False
     
     @property
     def reminders(self):
@@ -78,7 +155,15 @@ class GoogleEvent(CalendarEvent):
         
     @property
     def is_recurring(self):
-        return self._item.recurring_event_id
+        return len(self._item.recurrence) > 0
+        #return self._item.recurring_event_id != None
+    
+    @property
+    def recurrence(self):
+        if self.is_recurring:
+            return self._item.recurrence
+        else:
+            return None
     
     @property
     def name(self):
@@ -94,7 +179,11 @@ class GoogleEvent(CalendarEvent):
     
     @property
     def start_datetime(self):
-        return self._item.start
+        if type(self._item.start) == datetime:
+            return self._item.start
+        else:
+            # Convert date to datetime
+            return datetime.combine(self._item.start, datetime.min.time())
     
     @property
     def end(self):
@@ -122,10 +211,6 @@ class TodoistEvent(CalendarEvent):
         super().__init__(item, calendars, project_id)
         self._project_id = project_id
 
-    @property
-    def isGoogleEvent(self):
-        return False
-    
     @property
     def isTodoistEvent(self):
         return True
@@ -249,9 +334,88 @@ class TodoistEvent(CalendarEvent):
                                                 description=description, 
                                                 due_string=recurrence)
 
+class HomeAssistantCalendar:
+    def __init__(self):
+        self._calendar_url = HA_CALENDAR_URL
+
+        self._events = {}
+        self._calendar_list = {}
+        self._calendar_colors = {}
+
+        self.calendar_list
+
+    @property
+    def calendar_list(self):
+        if not self._calendar_list:
+            response = requests.get(f"{self._calendar_url}", headers=HA_HEADER)
+            data = json.loads(response.text)
+            self._calendar_list = { calendar['name']: calendar['entity_id'] for calendar in data }
+            for calendarName in self._calendar_list:
+                self._calendar_colors[self._calendar_list[calendarName]] = HA_CALENDAR_COLORS.get(self._calendar_list[calendarName], '#FF0000')
+        return self._calendar_list
+
+    @property
+    def calendar_colors(self):
+        return self._calendar_colors
+    
+    def update(self):
+        #self._events = self.get_events()
+        now = datetime.now()
+        start_date = now.replace(month=now.month-1)
+        end_date = now.replace(month=now.month+1)
+        #start_date = (datetime.now() - dateutil.relativedelta.relativedelta(month=1)).replace(day=1).date()
+        #end_date = (datetime.now() + dateutil.relativedelta.relativedelta(month=1)).replace(day=31).date()
+
+        self._events = []
+        for calendar_id in self._calendar_list.values():
+            if calendar_id in HA_CALENDAR_COLORS:
+                events_url = f"{self._calendar_url}/{calendar_id}?start={start_date}&end={end_date}"
+                response = requests.get(events_url, headers=HA_HEADER)
+                data = json.loads(response.text)
+                for ev in data:
+                    self._events.append(HomeAssistantEvent(ev, self, calendar_id))
+
+#        if start_date is None:
+#            # Set start_date to first day of previous month
+#            start_date = (datetime.now() - dateutil.relativedelta.relativedelta(month=1)).replace(day=1).date()
+#        if end_date is None:
+#            # Set end_date to last date of next month
+#            end_date = (datetime.now() + dateutil.relativedelta.relativedelta(month=1)).replace(day=31).date()
+#
+#        if calendar_id:
+#            events_url = f"{self._calendar_url}/{calendar_id}?start={start_date}&end={end_date}"
+#            response = requests.get(events_url, headers=HA_HEADER)
+#            data = json.loads(response.text)
+#            events = data
+#        else:
+#            events = []
+#            for calendar_id in self._calendar_list.values():
+#                events_url = f"{self._calendar_url}/{calendar_id}?start={start_date}&end={end_date}"
+#                response = requests.get(events_url, headers=HA_HEADER)
+#                data = json.loads(response.text)
+#                events += data
+
+    def get_events(self, start_date=None, end_date=None, single_events=False, calendar_id=None):
+        #self.update()
+        events = []
+        #for calendar_id in self._calendar_list.values():
+            #for ev in self._events[calendar_id]:
+        for ev in self._events:
+            if start_date and end_date:
+                if ev.start_date>= start_date and ev.end_date<= end_date:
+                    if ev.calendar_id == calendar_id:
+                        events.append(ev)
+            elif start_date:
+                if ev.start_date == start_date:
+                    if ev.calendar_id == calendar_id:
+                        events.append(ev)
+
+        return events
+
 class Calendars:
     google_enabled = False
-    todoist_enabled = True
+    todoist_enabled = False
+    homeassistant_enabled = True
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
     def __init__(self, screen_obj):
         self._displayDates = []
@@ -307,6 +471,14 @@ class Calendars:
                 print(f"Error logging into to Google Calendar:\n   {error}")
                 sys.exit(-1)
 
+        # Connect to Home Assistant Calendar
+        if Calendars.homeassistant_enabled:
+            try:
+                self.ha = HomeAssistantCalendar()
+            except Exception as error:
+                print(f"Error logging into to Home Assistant Calendar:\n   {error}")
+                sys.exit(-1)
+
         self.update()
 
     def update(self):
@@ -327,6 +499,9 @@ class Calendars:
                 
                 done = True
             print("Done")
+
+        if Calendars.homeassistant_enabled:
+            self.ha.update()
 
         self._displayDates = []
 
@@ -373,6 +548,7 @@ class Calendars:
                 try:
                     for calendar_id in self._enabledCalendars:
                         these_events = self.gcal.get_events(self._displayDates[0], self._displayDates[-1], single_events=True, calendar_id = calendar_id)
+                        #these_events = self.gcal.get_events(self._displayDates[0], self._displayDates[-1], single_events=False, calendar_id = calendar_id)
                         self.google_events[calendar_id] = list(these_events)
                 except Exception as error:
                     print(f"Error loading Google Calendar:\n   {error}")
@@ -402,6 +578,25 @@ class Calendars:
 
                 done = True
             print("Done")
+
+        self.homeassistant_events = {}
+        if Calendars.homeassistant_enabled:
+            print("Loading Home Assistant Calendar")
+            self.ha.update()
+
+#            done = False
+#            while not done:
+#                try:
+#                    for calendar_id in self.ha.calendar_list.values():
+#                        #these_events = self.ha.get_events(calendar_id=calendar_id, start_date=self._displayDates[0], end_date=self._displayDates[-1])
+#                        these_events = self.ha.get_events(calendar_id=calendar_id, start_date=self._displayDates[0])
+#                        self.homeassistant_events[calendar_id] = these_events
+#                except Exception as error:
+#                    print(f"Error loading Home Assistant Calendar:\n   {error}")
+#                    print("Trying again in 10 seconds...")
+#                    time.sleep(10)
+#
+#                done = True
 
         #print()
         #self.todoist_api.sync()
@@ -439,6 +634,14 @@ class Calendars:
     
                 #to_return[project_name] = these_evs
                 to_return[project_name] = [ TodoistEvent(e, self, project.id) for e in these_evs ]
+
+        if Calendars.homeassistant_enabled:
+            for calendar in self.ha.calendar_list:
+                #these_evs = self.ha.get_events(calendar_id=self.ha.calendar_list[calendar], start_date=this_date, end_date=this_date)
+                these_evs = self.ha.get_events(calendar_id=self.ha.calendar_list[calendar], start_date=this_date)
+                #to_return['Home Assistant'] = [ HomeAssistantEvent(e, self, self.ha.calendar_list[calendar]) for e in these_evs ]
+                #to_return[self.ha.calendar_list[calendar]] = [ HomeAssistantEvent(e, self, self.ha.calendar_list[calendar]) for e in these_evs ]
+                to_return[self.ha.calendar_list[calendar]] = these_evs
 
         return to_return
     

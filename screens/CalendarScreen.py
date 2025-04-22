@@ -360,6 +360,8 @@ class CalendarItem(MDLabel):
         FindDialogRoot(instance).dismiss()
         this_window = FindWindowFromWidget(instance)
         start_datetime = self._event.start_datetime
+        if type(start_datetime) == date:
+            start_datetime = datetime.combine(start_datetime, time(0,0))
 
         if start_datetime.date() == datetime.now().date():
             this_cont = MDDialogButtonContainer(

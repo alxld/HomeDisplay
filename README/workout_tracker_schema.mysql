@@ -33,12 +33,21 @@ CREATE TABLE exercise_body_parts (
     FOREIGN KEY (body_part_id) REFERENCES body_parts(body_part_id)
 );
 
+-- Type of workout (heavy weight, moderate weight, etc.)
+CREATE TABLE workout_types (
+    workout_type_id INT AUTO_INCREMENT PRIMARY KEY,
+    workout_type_name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT
+);
+
 -- Workouts table
 CREATE TABLE workouts (
     workout_id INT AUTO_INCREMENT PRIMARY KEY,
     workout_date DATE NOT NULL,
     workout_notes TEXT, -- General workout notes
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    workout_type_id INT, -- Foreign key for workout type
+    FOREIGN KEY (workout_type_id) REFERENCES workout_types(workout_type_id)
 );
 
 -- Workout Users linking table
