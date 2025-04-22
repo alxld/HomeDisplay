@@ -96,7 +96,7 @@ class HomeAssistantEvent(CalendarEvent):
 
     @property
     def start_pretty(self):
-        return self._item['start'].strftime(self._start_format)
+        return self.start_datetime.strftime(self._start_format)
     
     @property
     def start_date(self):
@@ -109,10 +109,10 @@ class HomeAssistantEvent(CalendarEvent):
     
     @property
     def start_datetime(self):
-        if type(self._item['start']) == datetime:
-            return self._item['start']
-        else:
-            # Parse date value in dictionary and convert to datetime
+        if 'dateTime' in self._item['start']:
+            return dateutil.parser.parse(self._item['start']['dateTime'])
+        elif 'date' in self._item['start']:
+            # Convert date to datetime
             return dateutil.parser.parse(self._item['start']['date'])
         
     @property
@@ -135,6 +135,36 @@ class HomeAssistantEvent(CalendarEvent):
     @property
     def calendar_id(self):
         return self._calendar_id
+    
+    @property
+    def reminders(self):
+        return "N/A"
+    
+    @property
+    def description(self):
+        return self._item['description']
+    
+    @property
+    def is_recurring(self):
+        if 'recurrence_id' in self._item and self._item['recurrence_id'] != None:
+            return True
+        else:
+            return False
+        
+    @property
+    def recurrence(self):
+        if self.is_recurring:
+            return self._item['recurrence_id']
+        else:
+            return None
+        
+    @property
+    def organizer(self):
+        return "UNKNOWN"
+    
+    @property
+    def visibility(self):
+        return "UNKNOWN"
     
 class GoogleEvent(CalendarEvent):
     def __init__(self, event, calendars, calendar_id):
