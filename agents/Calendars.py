@@ -174,6 +174,24 @@ class HomeAssistantEvent(CalendarEvent):
             return self._item['location']
     
 class GoogleEvent(CalendarEvent):
+    @classmethod
+    def isOnDay(cls, ev, date):
+        if type(ev.start) == datetime:
+            start_date = ev.start.date()
+        else:
+            start_date = ev.start
+        if type(ev.end) == datetime:
+            end_date = ev.end.date()
+        else:
+            end_date = ev.end - timedelta(days=1)
+
+        if start_date == date:
+            return True
+        elif start_date < date and end_date >= date:
+            return True
+        else:
+            return False
+        
     def __init__(self, event, calendars, calendar_id):
         super().__init__(event, calendars, calendar_id)
 
@@ -276,6 +294,24 @@ class GoogleEvent(CalendarEvent):
 
         self._calendars.gcal.update_event(self._item)
 
+    def completeEvent(self):
+        # Google Calendar events cannot be marked as complete, so adding the word 'Complete'
+        # to beginning of desription and not showing those items in the calendar
+        if self._item.description:
+            self._item.description = f"Complete\n{self._item.description}"
+        else:
+            self._item.description = "Complete"
+        self._calendars.gcal.update_event(self._item)
+
+    @property
+    def is_completed(self):
+        if self._item.description and self._item.description.startswith("Complete"):
+            return True
+        else:
+            return False
+        
+    def deleteEvent(self):
+        self._calendars.gcal.delete_event(self._item.id)
 
 class TodoistEvent(CalendarEvent):
     def __init__(self, item, calendars, project_id):
@@ -576,19 +612,13 @@ class Calendars:
 
         self._displayDates = []
 
-        curr_weekday = self.today.weekday() + 1
+        today = datetime.now().date()
+        current_weekday = today.weekday()
+        days_to_previous_sunday = (current_weekday + 1) % 7
+        start_date = today - timedelta(days=days_to_previous_sunday + 7)
 
-        for i in range(curr_weekday):
-            this_date = self.today - timedelta(days=curr_weekday - i)
-            self._displayDates.append(this_date)
+        self._displayDates = [(start_date + timedelta(days=i)) for i in range(35)]
 
-        self._displayDates.append(self.today)
-
-        i = 0
-        while(len(self._displayDates) < 35):
-            i = i + 1
-            self._displayDates.append(self.today + timedelta(i))
-        
         def scale_color(hex_color, scale_factor):
             hex_color = hex_color.lstrip('#')
             r, g, b = tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
@@ -604,8 +634,18 @@ class Calendars:
         if Calendars.google_enabled:
             self.google_colors = {}
             for calendar_id in self._enabledCalendars:
-                cid = self.gcal.get_calendar_list_entry(calendar_id).color_id
-                color = self.gcal.list_calendar_colors()[cid]
+                done = False
+                while not done:
+                    try:
+                        cid = run_with_timeout(self.gcal.get_calendar_list_entry, [calendar_id], 10).color_id
+                        color = run_with_timeout(self.gcal.list_calendar_colors, [], 10)[cid]
+                    except Exception as error:
+                        print(f"Error loading Google Calendar details: {error}")
+                    
+                    done = True
+
+                #cid = self.gcal.get_calendar_list_entry(calendar_id).color_id
+                #color = self.gcal.list_calendar_colors()[cid]
                 color['background'] = scale_color(color['background'], 0.7)
                 color['foreground'] = scale_color(color['foreground'], 1.0)
                 self.google_colors[calendar_id] = color
@@ -693,10 +733,12 @@ class Calendars:
         to_return = {}
         if Calendars.google_enabled:
             for calendar_id in self._enabledCalendars:
-                these_evs = [ e for e in self.google_events[calendar_id] if (type(e.start)==datetime and e.start.date() == this_date) or 
-                                                                            (type(e.start)==type(this_date) and e.start == this_date) ]
-                #to_return[calendar_id] = these_evs
+                these_evs = [ e for e in self.google_events[calendar_id] if GoogleEvent.isOnDay(e, this_date) ]
+                #these_evs = [ e for e in self.google_events[calendar_id] if (type(e.start)==datetime and e.start.date() == this_date) or 
+                #                                                            (type(e.start)==type(this_date) and e.start == this_date) ]
+
                 to_return[calendar_id] = [ GoogleEvent(e, self, calendar_id) for e in these_evs ]
+                to_return[calendar_id] = [ e for e in to_return[calendar_id] if not e.is_completed ]
 
         if Calendars.todoist_enabled:
             for project_name in self._enabledProjects:
@@ -746,10 +788,30 @@ class Calendars:
                                              #priority=priority, 
                                              description=description, 
                                              due_string=recurrence)
+            
+    def addGoogleEvent(self, name=None, description=None, due_date=None, due_time=None, recurrence=None, location=None):
+        if not due_date:
+            print("No due date provided")
+            return
+        if recurrence:
+            print("Recurrence not supported yet")
+            return
 
+        if due_time:
+            new_due = datetime.strptime(f"{due_date} {due_time}", "%Y-%m-%d %H:%M")
+        elif due_date:
+            new_due = datetime.strptime(due_date, "%Y-%m-%d").date()
+
+        ev = Event(name, start=new_due)
+        if description:
+            ev.description = description
+        if location:
+            ev.location = location
+
+        self.gcal.add_event(ev) 
 
     #def add_item(self, item, platform='todoist'):
-    #    if platform == 'todoist':
+    #    if platform == 'todoists
     #        self.add_item_to_todoist(item)
     #    elif platform == 'keep':
     #        self.add_item_to_keep(item)

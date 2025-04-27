@@ -191,6 +191,7 @@ class CalendarScreen(MDScreen):
                 MDTextField(MDTextFieldHintText(text="Description"), id="Description", mode="filled"),
                 MDTextField(MDTextFieldHintText(text="Date"), text=datetime.now().date().strftime("%Y-%m-%d"), id="Date", mode="filled", on_touch_down=self.show_date_picker, readonly=True, focus_behavior=False),
                 MDTextField(MDTextFieldHintText(text="Time"), text="12:00", id="Time", mode="filled", on_touch_down=self.show_time_picker, readonly=True, focus_behavior=False),
+                MDTextField(MDTextFieldHintText(text="Location"), id="Location", mode="filled"),
                 MDTextField(MDTextFieldHintText(text="Recurrence"), mode="filled", id="Recurrence"),
                 orientation="vertical"
             ),
@@ -280,8 +281,10 @@ class CalendarScreen(MDScreen):
         date = FindChildByID(dlrt, "Date").text
         time = FindChildByID(dlrt, "Time").text
         recstr = FindChildByID(dlrt, "Recurrence").text
+        loc = FindChildByID(dlrt, "Location").text
 
-        self._calendars.addTodoistEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr)
+        #self._calendars.addTodoistEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr)
+        self._calendars.addGoogleEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr, location=loc)
         
         self.update()
 
