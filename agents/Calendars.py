@@ -55,8 +55,10 @@ class CalendarEvent:
 
         if platform.system() in ('Linux'):
             self._start_format = "%-I:%M%p"
+            self._start_time_format = "%-I:%M %p"
         else:
             self._start_format = "%#I:%M%p"
+            self._start_time_format = "%#I:%M %p"
         self._start_format = f"{self._start_format} on %A, %B %d, %Y"
 
     @property
@@ -198,7 +200,14 @@ class GoogleEvent(CalendarEvent):
         if self.is_recurring:
             return self._item.recurrence
         else:
-            return None
+            return ""
+        
+    @property
+    def location(self):
+        if self._item.location:
+            return self._item.location
+        else:
+            return ""
     
     @property
     def name(self):
@@ -207,6 +216,10 @@ class GoogleEvent(CalendarEvent):
     @property
     def start_pretty(self):
         return self._item.start.strftime(self._start_format)
+    
+    @property
+    def start_time_pretty(self):
+        return self._item.start.strftime(self._start_time_format)
     
     @property
     def start_date(self):
@@ -238,7 +251,30 @@ class GoogleEvent(CalendarEvent):
     
     @property
     def description(self):
-        return self._item.description
+        if self._item.description:
+            return self._item.description
+        else:
+            return "No description set"
+        
+    def updateEvent(self, name=None, due_date=None, due_time=None, priority=None, description=None, recurrence=None):
+        if name:
+            self._item.summary = name
+        if description:
+            self._item.description = description
+
+        if due_date or (due_time and due_time != "00:00"):
+            if due_date and due_time and due_time != "00:00":
+                new_due = datetime.strptime(f"{due_date} {due_time}", "%Y-%m-%d %H:%M")
+            elif due_date:
+                new_due = datetime.combine(datetime.strptime(due_date, "%Y-%m-%d"), self.start_datetime.time())
+                new_due = new_due.date()
+            elif due_time:
+                new_due = datetime.combine(self.start_date, datetime.strptime(due_time, "%H:%M").time())
+            
+            self._item.start = new_due
+            self._item.end = new_due + timedelta(hours=1)
+
+        self._calendars.gcal.update_event(self._item)
 
 
 class TodoistEvent(CalendarEvent):
@@ -448,9 +484,9 @@ class HomeAssistantCalendar:
         return events
 
 class Calendars:
-    google_enabled = False
+    google_enabled = True
     todoist_enabled = False
-    homeassistant_enabled = True
+    homeassistant_enabled = False
     color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
     def __init__(self, screen_obj):
         self._displayDates = []

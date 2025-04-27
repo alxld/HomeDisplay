@@ -126,9 +126,9 @@ class CalendarScreen(MDScreen):
                     bgcolor, fgcolor = ev.colors
                     if type(ev.end) == datetime:
                         if ev.end.replace(tzinfo=pytz.utc) < self._calendars.now.replace(tzinfo=pytz.utc):
-                            ev_lbl = CalendarItem(text=f"[s]{ev.start_pretty} {ev.name}[/s]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+                            ev_lbl = CalendarItem(text=f"[s]{ev.start_time_pretty} {ev.name}[/s]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
                         else:
-                            ev_lbl = CalendarItem(text=f"[b]{ev.start_pretty} {ev.name}[/b]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
+                            ev_lbl = CalendarItem(text=f"[b]{ev.start_time_pretty} {ev.name}[/b]", fgcolor=fgcolor, bgcolor=bgcolor, calendar_id=calendar_id, event=ev, screen=self)
                     else:
                         # All-day event, using 'start' since 'end' is on the next day
                         if ev.start_date < self._calendars.now.date():
@@ -595,7 +595,7 @@ class CalendarItem(MDLabel):
                         MDListItemSupportingText(text=f"Reminder: {reminder}")
                     ),
                     MDListItem(
-                        MDListItemSupportingText(text=f"Description: {descr}")
+                        MDListItemSupportingText(text=f"Description: {descr}", max_lines=2)
                     ),
                     MDListItem(
                         MDListItemSupportingText(text=f"Recurring: {recurr_text}")
