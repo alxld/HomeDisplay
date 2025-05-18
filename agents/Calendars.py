@@ -635,7 +635,8 @@ class Calendars:
             self.google_colors = {}
             for calendar_id in self._enabledCalendars:
                 done = False
-                while not done:
+                color = None
+                while not done or color == None:
                     try:
                         cid = run_with_timeout(self.gcal.get_calendar_list_entry, [calendar_id], 10).color_id
                         color = run_with_timeout(self.gcal.list_calendar_colors, [], 10)[cid]
