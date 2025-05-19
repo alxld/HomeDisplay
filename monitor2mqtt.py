@@ -13,6 +13,8 @@ def on_message(client, userdata, msg):
         monitor_on()
     elif msg.topic == f"{mqtt_name}/monitor/monitor_dim":
         monitor_dim()
+    elif msg.topic == f"{mqtt_name}/monitor/monitor_very_dim":
+        monitor_very_dim()
     elif msg.topic == f"{mqtt_name}/monitor/monitor_off":
         monitor_off()
 
@@ -42,6 +44,13 @@ def monitor_dim():
         with monitor:
             monitor.set_power_mode(1)
             monitor.set_luminance(25)
+            monitor.set_contrast(0)
+
+def monitor_very_dim():
+    for monitor in monitors:
+        with monitor:
+            monitor.set_power_mode(1)
+            monitor.set_luminance(5)
             monitor.set_contrast(0)
 
 client = mqtt.Client()
