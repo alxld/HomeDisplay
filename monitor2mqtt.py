@@ -44,7 +44,7 @@ def monitor_dim():
         with monitor:
             monitor.set_power_mode(1)
             monitor.set_luminance(75)
-            monitor.set_contrast(15)
+            monitor.set_contrast(30)
 
 def monitor_very_dim():
     for monitor in monitors:
