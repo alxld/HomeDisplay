@@ -770,6 +770,7 @@ class Calendars:
 
     def addTodoistEvent(self, name=None, description=None, due_date=None, due_time=None, recurrence=None, priority=None):
         new_due = None
+        project_id = list(self.todoist_projects.keys())[0]
 
         if recurrence:
             resp = self.todoist_api.add_task(content=name, 
@@ -792,7 +793,11 @@ class Calendars:
                                              due_datetime=new_due, 
                                              #priority=priority, 
                                              description=description, 
-                                             due_string=recurrence)
+                                             due_string=recurrence,
+                                             project_id=project_id)
+            
+            if resp:
+                print(f"Added Todoist event: {resp.content} with due date {resp.due.date}")
             
     def addGoogleEvent(self, name=None, description=None, due_date=None, due_time=None, recurrence=None, location=None):
         if not due_date:

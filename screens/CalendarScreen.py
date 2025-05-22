@@ -397,6 +397,11 @@ class CalendarItem(MDLabel):
                 )
             )
 
+        if self._event.is_recurring:
+            recurr_text = f"True: ({self._event.recurrence})"
+        else:
+            recurr_text = "False"
+
         self._dlg = MDDialog(
             MDDialogHeadlineText(text=f"Editing {self.text}"),
             MDDialogContentContainer(
@@ -404,7 +409,7 @@ class CalendarItem(MDLabel):
                 MDTextField(MDTextFieldHintText(text="Description"), text=self._event.description, id="Description", mode="filled"),
                 MDTextField(MDTextFieldHintText(text="Date"), text=start_datetime.date().strftime("%Y-%m-%d"), id="Date", mode="filled", on_touch_down=self.show_date_picker, readonly=True, focus_behavior=False),
                 MDTextField(MDTextFieldHintText(text="Time"), text=start_datetime.time().strftime("%H:%M"), id="Time", mode="filled", on_touch_down=self.show_time_picker, readonly=True, focus_behavior=False),
-                MDTextField(MDTextFieldHintText(text="Recurrence"), text=self._event.recurrence, id="Recurrence", mode="filled"),
+                MDTextField(MDTextFieldHintText(text="Recurrence"), text=recurr_text, id="Recurrence", mode="filled"),
                 orientation="vertical"
             ),
             this_cont
