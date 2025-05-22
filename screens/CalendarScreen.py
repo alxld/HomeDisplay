@@ -283,8 +283,8 @@ class CalendarScreen(MDScreen):
         recstr = FindChildByID(dlrt, "Recurrence").text
         loc = FindChildByID(dlrt, "Location").text
 
-        #self._calendars.addTodoistEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr)
-        self._calendars.addGoogleEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr, location=loc)
+        self._calendars.addTodoistEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr)
+        #self._calendars.addGoogleEvent(name=name, description=descr, due_date=date, due_time=time, recurrence=recstr, location=loc)
         
         self.update()
 

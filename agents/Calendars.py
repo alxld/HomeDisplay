@@ -382,6 +382,10 @@ class TodoistEvent(CalendarEvent):
         return "N/A"
     
     @property
+    def location(self):
+        return "N/A"
+    
+    @property
     def description(self):
         return self._item.description
 
@@ -520,15 +524,15 @@ class HomeAssistantCalendar:
         return events
 
 class Calendars:
-    google_enabled = True
-    todoist_enabled = False
+    google_enabled = False
+    todoist_enabled = True
     homeassistant_enabled = False
-    color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85]}
+    color_overrides = {'mint_green': [0.596, 0.984, 0.596], 'charcoal': [0.85, 0.85, 0.85], 'berryred': [0.48, 0.12, 0.16], 'berry_red': [0.48, 0.12, 0.16]}
     def __init__(self, screen_obj):
         self._displayDates = []
         self._enabledCalendars = ['aarondeno11@gmail.com', 'en.usa#holiday@group.v.calendar.google.com']
         #self._enabledProjects = ['Appointments (Outlook)', 'Inbox', 'Maintenance', 'Birthdays', "Soft ToDo's"]
-        self._enabledProjects = ['Appointments (Outlook)', 'Maintenance', 'Birthdays']
+        self._enabledProjects = ['Outlook Appointments', 'Important Dates', 'Maintenance']
         self._screen_obj = screen_obj
 
         # Load and save todoist collaborators to save on API calls using pickle
